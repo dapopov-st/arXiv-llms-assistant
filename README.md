@@ -1,8 +1,6 @@
 # RAG Over ArXiV Papers with Finetuning and Webscraping
 
-This repository is used to keep track of experiments with Language Models (LMs).
-
-## In Progress (Prio 1)
+## In Progress
 
 - RAG with LLama2 over some ArXiv papers in PDF format. Retrieving from a couple dozen ArXiv LLM papers. Currently, there is a working version with RecursiveCharacterTextSplitter (1000 chunks with 30 overlap), FAISS, and Llama2-13b. The answer quality seems to be good. I aim to increase the generation speed and see if we can add metadata to retrieval (expect retrieval over a large collection of documents to become a bottleneck).
     - Add metadata with article title for easier verification of sources.
