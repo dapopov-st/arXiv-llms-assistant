@@ -1,4 +1,4 @@
-# RAG Over ArXiV Papers (includng scraping and fine tuning)
+# RAG Over ArXiV Papers (including scraping and fine tuning)
 
 ## In Progress
 
