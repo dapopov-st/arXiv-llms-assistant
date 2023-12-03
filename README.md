@@ -2,16 +2,19 @@
 
 ## In Progress
 
-- RAG with LLama2 over some ArXiv papers in PDF format. Retrieving from a couple dozen ArXiv LLM papers. Currently, there is a working version with RecursiveCharacterTextSplitter (1000 chunks with 30 overlap), FAISS, and Llama2-13b. The answer quality seems to be good. I aim to increase the generation speed and see if we can add metadata to retrieval (expect retrieval over a large collection of documents to become a bottleneck).
+#### RAG over some ArXiv papers in PDF format. Retrieving from a couple dozen ArXiv LLM papers. The answer quality seems to be good. The goal is to fill in knowledge gaps in NLP (later other domains, perhaps) by comparing out-of-repository papers with papers in a personal repo.
+
+DONE:
+    - Set up the initial pipeline with RecursiveCharacterTextSplitter (1000 chunks with 30 overlap), FAISS, and Llama2-13b.
+    - Tried HuggingFaceH4/zephyr-7b-beta. Much less memory (7-8GB) used and faster generation. Can be bit fragile to promping (know issue with current Zephyr models) but works well with TextLoader. 
+    - Mistral-7b-Instruct performs well: blazing fast compared to the original Llama2-13b and subjectively better answer quality. Experimenting with fine tuning it on ArXiv ML abstracts and titles to further adapt it to the domain (more for practice with instruction tuning).
+    - Extract additional articles (for now tested with a single article and ArXiv API) and use abstract summaries to learn about articles similar/different from the ones in the vector store.  The idea is to fill in knowledge gaps in the field. Done via scraping AK's titles and abstracts (wrote script to do this weekly).
     - Add metadata with article title for easier verification of sources.
-    - Extract additional articles (for now tested with a single article and ArXiv API) and use abstract summaries to learn about articles similar/different from the ones in the vector store.  The idea is to fill in knowledge gaps in the field.
-    - Tried HuggingFaceH4/zephyr-7b-beta. Much less memory (7-8GB) used and faster generation. Can be bit fragile to promping (know issue with current Zephyr models) but works well with TextLoader.
-    - Mistral-7b-Instruct performs well. Experimenting with fine tuning it on ArXiv ML abstracts and titles to further adapt it to the domain.
   
-
 TODOS:
-
-    - Extrapolate to multiple articles, scrape relevant websites for unknown breakthroughs 
+    - Test fine tuned version (checkpoint-64)
+    - Evaluate individual pieces of the RAG pipeline
+    - See if can categorize the paper into NLP, CV, or stable diffusion, then can aim to fill in knowledge gaps in that domain using current ArXiv papers. The model may do this out of the box with zero shot learning (likely) or could fine tune.
     - Perhaps use llamaindex Knowledge Agents? 
-    - Next, I aim to see if we can use Pinecone/Elasticsearch to use metadata for retrieval
-    - Continue fine tuning experiments
+    - Next, see if Pinecone/Elasticsearch gives more flexibility over the use of metadata for retrieval
+   
