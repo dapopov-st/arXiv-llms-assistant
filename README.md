@@ -7,6 +7,7 @@
 DONE:
 
     - Set up the initial pipeline with RecursiveCharacterTextSplitter (1000 chunks with 30 overlap), FAISS, and Llama2-13b.
+    - Preprocess the data by only loading the articles up to the References section as References were first to be retrieved otherwise, which is not useful
     - Tried HuggingFaceH4/zephyr-7b-beta. Much less memory (7-8GB) used and faster generation. Can be bit fragile to promping (know issue with current Zephyr models) but works well with TextLoader. 
     - Mistral-7b-Instruct performs well: blazing fast compared to the original Llama2-13b and subjectively better answer quality. Experimenting with fine tuning it on ArXiv ML abstracts and titles to further adapt it to the domain (more for practice with instruction tuning).
     - Extract additional articles (for now tested with a single article and ArXiv API) and use abstract summaries to learn about articles similar/different from the ones in the vector store.  The idea is to fill in knowledge gaps in the field. Done via scraping AK's titles and abstracts (wrote script to do this weekly).
