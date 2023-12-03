@@ -2,7 +2,7 @@
 
 ## In Progress
 
-#### RAG over some ArXiv papers in PDF format. Retrieving from a couple dozen ArXiv LLM papers. The answer quality seems to be good. The goal is to fill in knowledge gaps in NLP (later other domains, perhaps) by comparing out-of-repository papers with papers in a personal repo.
+- RAG over some ArXiv papers in PDF format. Retrieving from a couple dozen ArXiv LLM papers. The answer quality seems to be good. The goal is to fill in knowledge gaps in NLP (later other domains, perhaps) by comparing out-of-repository papers with papers in a personal repo.
 
 DONE:
 
