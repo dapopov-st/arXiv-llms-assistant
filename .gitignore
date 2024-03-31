@@ -162,3 +162,4 @@ cython_debug/
 # Pdfs
 RagOverArXiv/clusterofstars
 RagOverArXiv/temp
+RagOverArXiv/nbs/cache/sentence-transformers
