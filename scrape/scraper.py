@@ -51,8 +51,14 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
 import os
+import re
+import logging
 from datetime import datetime, timedelta
 import pandas as pd
+
+# Set up basic logging
+logging.basicConfig(filename='../logs/scraper.log', level=logging.INFO, 
+                    format='%(asctime)s %(levelname)s %(message)s')
 
 # **********Get relevant dates to scrape**********
 # Choose a starting day and how many days back to scrape
@@ -60,7 +66,7 @@ ENDING_DAY = datetime.today().date() # Usual use case
 # Adjust the day to start going back from different date, as in the commented out line below
 #ENDING_DAY = datetime.strptime("2023-11-01","%Y-%m-%d").date() 
 DAYS_BACK = 8  # Can adjust number of days back to scrape
-os.makedirs('./data', exist_ok=True)
+os.makedirs('../data', exist_ok=True)
 # **********Set up Selenium driver**********
 # Specify the path to the geckodriver executable
 geckodriver_path = '/snap/bin/geckodriver'  # replace with the actual path
@@ -89,23 +95,36 @@ def get_one_days_df():
     Returns:
         DataFrame: A DataFrame with the columns 'title', 'authors', and 'abstract'. Each row represents one paper.
     """
-    articles_df = pd.DataFrame(columns=['title','authors','abstract'])
-    i = 1
+    articles_df = pd.DataFrame(columns=['title','authors','abstract','arxiv_abbrev'])
+    article_idx = 1
     while True:
         try:
-            x_path = f'/html/body/div/main/div[2]/section/div[2]/div[{i}]/article/div/div/div[2]/h3/a'
+            x_path = f'/html/body/div/main/div[2]/section/div[2]/div[{article_idx}]/article/div/div/div[2]/h3/a'
             element = WebDriverWait(browser, 10).until(
                 EC.presence_of_element_located((By.XPATH, x_path)))
+
             element.click()
+            page_text = browser.page_source
+            match = re.search(r'https://arxiv\.org/pdf/(\d+\.\d+)', page_text)
+            arxiv_abbrev = match.group(1) if match else None
+            #print(f'Arxiv abbrev: {arxiv_abbrev}'); break
             title = WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div/main/div/section[1]/div/div[1]/h1')))
             authors = WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div/main/div/section[1]/div/div[1]/div[4]')))
             abstract = WebDriverWait(browser, 10).until(EC.presence_of_element_located((By.XPATH, '/html/body/div/main/div/section[1]/div/div[2]/p')))
-            new_row = pd.DataFrame([{'title':title.text.replace('\n',' '), 'authors':authors.text.replace('\n',''),'abstract':abstract.text}])
+
+            new_row = pd.DataFrame([{'title':title.text.replace('\n',' '), 'authors':authors.text.replace('\n',''),'abstract':abstract.text,'arxiv_abbrev':arxiv_abbrev}]) 
             articles_df = pd.concat([articles_df,new_row],ignore_index=True)
-            i += 1
             browser.back()
+            article_idx += 1
+
         except TimeoutException:
+            #logging.exception('TimeoutException occurred')
             return articles_df
+        except Exception as e:
+            logging.exception('Exception occurred: \n',e)
+        # finally:
+        #     print(f"Arxiv abbrev: {arxiv_abbrev}"); break
+
 def get_past_time_range_days_df():
     """
     Initializes an empty DataFrame with the columns 'title', 'authors', and 'abstract'.
@@ -132,5 +151,6 @@ def get_past_time_range_days_df():
             print('writing to csv')
     ARTICLES_DF.to_csv(f'./data/articles_up_to_{day}.csv',index=False)
     print('writing to csv')
+    logging.info(f'Finished scraping all days for {ENDING_DAY} going {DAYS_BACK} on {datetime.now()}')
 get_past_time_range_days_df()
 

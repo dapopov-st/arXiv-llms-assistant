@@ -32,8 +32,8 @@ def get_title_and_abstract(arxiv_id):
         # Get the first entry
         entry = data.entries[0]
 
-        # Print the title and abstract
-        title = entry.title
+        # Get title and abstract
+        title = entry.title.replace('\n', '').replace('\r', '').strip()
         abstract = entry.summary
         return title, abstract
     except Exception as e:
