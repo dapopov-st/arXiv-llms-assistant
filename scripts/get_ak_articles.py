@@ -55,17 +55,17 @@ import re
 import logging
 from datetime import datetime, timedelta
 import pandas as pd
-
+import argparse
 # Set up basic logging
-logging.basicConfig(filename='../logs/scraper.log', level=logging.INFO, 
+logging.basicConfig(filename='./logs/scraper.log', level=logging.INFO, 
                     format='%(asctime)s %(levelname)s %(message)s')
 
 # **********Get relevant dates to scrape**********
 # Choose a starting day and how many days back to scrape
-ENDING_DAY = datetime.today().date() # Usual use case
+#ENDING_DAY = datetime.today().date() # Usual use case
 # Adjust the day to start going back from different date, as in the commented out line below
 #ENDING_DAY = datetime.strptime("2023-11-01","%Y-%m-%d").date() 
-DAYS_BACK = 8  # Can adjust number of days back to scrape
+#DAYS_BACK = 8  # Can adjust number of days back to scrape
 os.makedirs('../data', exist_ok=True)
 # **********Set up Selenium driver**********
 # Specify the path to the geckodriver executable
@@ -125,7 +125,7 @@ def get_one_days_df():
         # finally:
         #     print(f"Arxiv abbrev: {arxiv_abbrev}"); break
 
-def get_past_time_range_days_df():
+def get_past_time_range_days_df(ending_day, days_back):
     """
     Initializes an empty DataFrame with the columns 'title', 'authors', and 'abstract'.
 
@@ -138,8 +138,8 @@ def get_past_time_range_days_df():
     ARTICLES_DF = pd.DataFrame(columns=['title','authors','abstract'])
     # Get the past TIME_RANGE days excluding weekends; do reversed range so if TimeoutException occurs,
     # it occurs because there's no articles posted for starting day (yet)
-    current_days = [datetime.strftime(ENDING_DAY-timedelta(days=i),"%Y-%m-%d") for i in reversed(range(0, DAYS_BACK))
-                    if (ENDING_DAY-timedelta(days=i)).weekday() not in [5,6]]
+    current_days = [datetime.strftime(ending_day-timedelta(days=i),"%Y-%m-%d") for i in reversed(range(0, days_back))
+                    if (ending_day-timedelta(days=i)).weekday() not in [5,6]]
     for day in current_days:
         browser.get(f'https://huggingface.co/papers?date={day}')
         try:
@@ -151,6 +151,17 @@ def get_past_time_range_days_df():
             print('writing to csv')
     ARTICLES_DF.to_csv(f'./data/articles_up_to_{day}.csv',index=False)
     print('writing to csv')
-    logging.info(f'Finished scraping all days for {ENDING_DAY} going {DAYS_BACK} on {datetime.now()}')
-get_past_time_range_days_df()
+    logging.info(f'Finished scraping all days for {ending_day} going {days_back} on {datetime.now()}')
 
+parser = argparse.ArgumentParser(description="Get AK's article titles, authors, abstracts, and abbreviations for a given daterange (default today and 8 days back)")
+parser.add_argument('--ending_day', type=str, default=datetime.today().date(),help='Ending date from which to start parsing backwards (default today)')
+parser.add_argument('--days_back', type=str, default = 8,help='Number of days back to parse')
+#parser.add_argument('--directory_unread_csv', type=str, default = './data/articles_up_to_2024-04-16.csv',help='Path to new articles csv file')
+args = parser.parse_args() 
+
+if __name__=='__main__':
+    ending_day = args.ending_day if args.ending_day <= datetime.today().date() else datetime.today().date()
+    days_back = int(args.days_back)
+    get_past_time_range_days_df(ending_day, days_back)
+
+    #TODO: FIX UP!!!
