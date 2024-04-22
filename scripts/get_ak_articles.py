@@ -9,13 +9,13 @@ Functions:
 - get_one_days_df: Scrapes the data for one day and returns a DataFrame with the data.
 - get_past_time_range_days_df: Initializes an empty DataFrame with the columns 'title', 'authors', and 'abstract'.
 
-Setting Global Variables:
+Script arguments:
 
-1. ENDING_DAY: This variable represents the date from which the script will start scraping data. By default, it is set to the current date. 
+1. ending_day: This variable represents the date from which the script will start scraping data. By default, it is set to the current date. 
    If you want to start from a different date, comment out the current ENDING_DAY line and uncomment the next line, replacing "2023-11-01" 
    with your desired date in the format "YYYY-MM-DD".
 
-2. DAYS_BACK: This variable represents the number of days back from the ENDING_DAY that the script will scrape data. You can adjust this 
+2. days_back: This variable represents the number of days back from the ENDING_DAY that the script will scrape data. You can adjust this 
    number as needed.
 
 Configuring Selenium:
@@ -164,4 +164,3 @@ if __name__=='__main__':
     days_back = int(args.days_back)
     get_past_time_range_days_df(ending_day, days_back)
 
-    #TODO: FIX UP!!!
