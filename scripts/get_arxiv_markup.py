@@ -45,9 +45,6 @@ Use this script at your own risk. The author is not responsible for any conseque
 from selenium import webdriver
 from selenium.webdriver.firefox.service import Service
 from selenium.webdriver.firefox.options import Options
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
 from bs4 import BeautifulSoup
@@ -55,8 +52,7 @@ from bs4 import BeautifulSoup
 import os
 import re
 import logging
-from datetime import datetime, timedelta
-import pandas as pd
+from datetime import datetime
 import argparse
 # Set up basic logging
 logging.basicConfig(filename='./logs/get_arxiv_markup.log', level=logging.INFO, 
@@ -77,53 +73,61 @@ browser = webdriver.Firefox(service=s, options=options)
 
 def clean_text(page_text):
     page_text = page_text.replace(r'Report issue for preceding element','')
-    page_text=page_text.replace(r'Report issue for preceding element','')
     cleaned_text = re.sub(r'\n\s*\n+', '\n', page_text)
     abstract_index=cleaned_text.upper().find('\nABSTRACT\n')
     ref_index=cleaned_text.upper().find('\nREFERENCES\n')
-    cleaned_text= cleaned_text[abstract_index:ref_index]
-    return cleaned_text
+    if abstract_index==-1: abstract_index=0
+    if ref_index==-1: ref_index=len(cleaned_text)
+    return cleaned_text[abstract_index:ref_index]
     
-def write_to_txt(clean_text):
-    if clean_text:
-       with open(f'./temp/{arxiv_abbrev}_cleaned.txt','w') as f:
-           f.write(clean_text) #page_text soup
+def write_to_txt(cleaned_text,write_dir='./temp'):
+    if cleaned_text:
+       with open(f'{write_dir}/{arxiv_abbrev}_cleaned.txt','w') as f:
+           f.write(cleaned_text) #page_text soup
            print(f'writing {arxiv_abbrev} to txt')
            logging.info(f'Finished writing {arxiv_abbrev} on {datetime.now()}')
-    else:
-        logging.error(f'No text found for {arxiv_abbrev} on {datetime.now()}')
-        
+
 def get_arxiv_markup(arxiv_abbrev):
     """
-    Scrapes the data for one day and returns a DataFrame with the data.
+    Fetches the text content from the arXiv HTML page for a given paper.
 
-    This function navigates through each paper link on the current page, extracts the title, authors, and abstract of each paper,
-    and stores this information in a pandas DataFrame. It continues this process until it encounters a TimeoutException,
-    at which point it returns the DataFrame.
+    This function first attempts to fetch the v2 version of the paper. If the length of the text content is less than or equal to 1000 characters, it then tries to fetch the v1 version of the paper. If the length of the text content is still less than or equal to 1000 characters, it logs an error.
+
+    Args:
+        arxiv_abbrev (str): The abbreviation of the arXiv paper.
 
     Returns:
-        DataFrame: A DataFrame with the columns 'title', 'authors', and 'abstract'. Each row represents one paper.
+        str: The text content of the paper if it is longer than 1000 characters, otherwise None.
+
+    Raises:
+        TimeoutException: If a timeout occurs while trying to fetch the page.
+        Exception: If any other exception occurs.
     """
    
-    
     try:
-        browser.get(f'https://arxiv.org/html/{arxiv_abbrev}v1')
-        
-
+        # Try to navigate to the v2 URL
+        browser.get(f'https://arxiv.org/html/{arxiv_abbrev}v2')
         page_source = browser.page_source
         soup = BeautifulSoup(page_source, 'html.parser')
-
-        # Extract the text
         page_text = soup.get_text()
-        references_index= page_text.upper().find('\nREFERENCES\n')
-        page_text = page_text[:references_index]
+
+        # If the length of the text is less than 1000, navigate to the v1 URL
+        if len(page_text) <= 1000:
+            browser.get(f'https://arxiv.org/html/{arxiv_abbrev}v1')
+            page_source = browser.page_source
+            soup = BeautifulSoup(page_source, 'html.parser')
+            page_text = soup.get_text()
+            return None
+
+        if len(page_text) <= 1000:
+            logging.error(f'No text found for {arxiv_abbrev} on {datetime.now()}')
   
-        return page_text if page_text else None
+        return page_text 
        
 
     except TimeoutException:
-        #logging.exception('TimeoutException occurred')
-        return
+        logging.exception('TimeoutException occurred')
+        
     except Exception as e:
         logging.exception('Exception occurred: \n',e)
 
@@ -131,14 +135,17 @@ def get_arxiv_markup(arxiv_abbrev):
 
 parser = argparse.ArgumentParser(description="Get article by arXiv number")
 parser.add_argument('--arxiv_abbrev', type=str, help='Arxiv abbreviation number')
-#parser.add_argument('--directory_unread_csv', type=str, default = './data/articles_up_to_2024-04-16.csv',help='Path to new articles csv file')
+parser.add_argument('--write_dir', type=str, default='./temp', help='Directory for writing markup of arXiv papers')
 args = parser.parse_args() 
 
 if __name__=='__main__':
     arxiv_abbrev = args.arxiv_abbrev
-  
-    clean_text = clean_text(get_arxiv_markup(arxiv_abbrev))
-    if clean_text: write_to_txt(clean_text)
+    write_dir = args.write_dir
+    if not os.path.exists(write_dir): os.makedirs(write_dir)
+    
+    cleaned_text,page_text = None,None
+    page_text = get_arxiv_markup(arxiv_abbrev)
+    if page_text: cleaned_text = clean_text(page_text)
+    if cleaned_text: write_to_txt(cleaned_text)
    
-    #TODO: Make sure to check post Dec 2023; check if get legitimate response, not 'HTML is not available for the source.'
-    #TODO: check v2 (think seen it somewhere)
+  
