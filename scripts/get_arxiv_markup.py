@@ -47,6 +47,7 @@ from selenium.common.exceptions import TimeoutException
 from bs4 import BeautifulSoup
 
 import os
+import sys
 import re
 import logging
 from datetime import datetime
@@ -100,34 +101,31 @@ def get_arxiv_markup(arxiv_abbrev):
         TimeoutException: If a timeout occurs while trying to fetch the page.
         Exception: If any other exception occurs.
     """
-   
+    page_text=''
     try:
         # Try to navigate to the v2 URL
         browser.get(f'https://arxiv.org/html/{arxiv_abbrev}v2')
         page_source = browser.page_source
         soup = BeautifulSoup(page_source, 'html.parser')
         page_text = soup.get_text()
-
         # If the length of the text is less than 1000, navigate to the v1 URL
-        if len(page_text) <= 1000:
+        if len(page_text) <= 2000:
             browser.get(f'https://arxiv.org/html/{arxiv_abbrev}v1')
             page_source = browser.page_source
             soup = BeautifulSoup(page_source, 'html.parser')
             page_text = soup.get_text()
-            return page_text if len(page_text) > 1000 else None
-
-        if len(page_text) <= 1000:
-            logging.error(f'No text found for {arxiv_abbrev} on {datetime.now()}')
-  
-        return page_text 
-       
+            
 
     except TimeoutException:
         logging.exception('TimeoutException occurred')
         
     except Exception as e:
         logging.exception('Exception occurred: \n',e)
-
+    finally:
+        if len(page_text) <= 2000:
+            logging.info(f'No text found for {arxiv_abbrev} on {datetime.now()}')
+       
+        return page_text if len(page_text) > 2000 else None
 
 
 parser = argparse.ArgumentParser(description="Get article by arXiv number")
@@ -143,6 +141,10 @@ if __name__=='__main__':
     cleaned_text,page_text = None,None
     page_text = get_arxiv_markup(arxiv_abbrev)
     if page_text: cleaned_text = clean_text(page_text)
-    if cleaned_text: write_to_txt(cleaned_text,write_dir=write_dir)
+    if cleaned_text:
+        write_to_txt(cleaned_text,write_dir=write_dir)
+        sys.exit(0) #success; can be used for further processing in bash script
+    else:
+        sys.exit(1) #failure
    
   
