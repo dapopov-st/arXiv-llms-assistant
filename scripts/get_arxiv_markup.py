@@ -114,7 +114,7 @@ def get_arxiv_markup(arxiv_abbrev):
             page_source = browser.page_source
             soup = BeautifulSoup(page_source, 'html.parser')
             page_text = soup.get_text()
-            return None
+            return page_text if len(page_text) > 1000 else None
 
         if len(page_text) <= 1000:
             logging.error(f'No text found for {arxiv_abbrev} on {datetime.now()}')
