@@ -32,11 +32,8 @@ DISCLAIMER:
 This script is intended for educational purposes only. While the author did not find that scraping violates HuggingFace's terms of service, 
 it is the user's responsibility to use this script in a manner that respects HuggingFace's terms of service and any applicable laws.
 
-This script is designed to scrape a limited amount of data (e.g., a week's worth) at a time. Excessive use may lead to your IP being 
-blocked by HuggingFace.
-
-Furthermore, HuggingFace may present "I'm not a robot" challenges to confirm that the user is a human. The user should be present when 
-the script is running to respond to these challenges.
+This script is designed to scrape a limited amount of data from arXiv at a time. Excessive use may lead to IP being 
+blocked.
 
 Use this script at your own risk. The author is not responsible for any consequences of using this script.
 """
@@ -142,10 +139,10 @@ if __name__=='__main__':
     arxiv_abbrev = args.arxiv_abbrev
     write_dir = args.write_dir
     if not os.path.exists(write_dir): os.makedirs(write_dir)
-    
+
     cleaned_text,page_text = None,None
     page_text = get_arxiv_markup(arxiv_abbrev)
     if page_text: cleaned_text = clean_text(page_text)
-    if cleaned_text: write_to_txt(cleaned_text)
+    if cleaned_text: write_to_txt(cleaned_text,write_dir=write_dir)
    
   
