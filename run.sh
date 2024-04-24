@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # Scrape: get paths to pass to below
+start_time=$(date)
+echo "Start time: $start_time"
 # Find the latest file
 latest_file=$(ls -t data/articles_up_to_*.csv | head -n1)
 
@@ -27,3 +29,9 @@ for file in abstracts_new/*.txt; do
         mv "$file" "abstracts_new_cant_process/$filename.txt"
     fi
 done
+
+python scripts/get_q_and_a.py --input_dir ./markups_new --output_dir ./q_and_a --processed_dir ./markups_new_processed --model_dir /home/mainuser/Desktop/LLMs/MixtralInference/Mixtral-8x7B-instruct-exl2
+
+
+end_time=$(date)
+echo "End time: $end_time"
