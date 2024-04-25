@@ -11,12 +11,8 @@ Functions:
 
 Script arguments:
 
-1. ending_day: This variable represents the date from which the script will start scraping data. By default, it is set to the current date. 
-   If you want to start from a different date, comment out the current ENDING_DAY line and uncomment the next line, replacing "2023-11-01" 
-   with your desired date in the format "YYYY-MM-DD".
-
-2. days_back: This variable represents the number of days back from the ENDING_DAY that the script will scrape data. You can adjust this 
-   number as needed.
+1. ending_day: 
+2. days_back: 
 
 Configuring Selenium:
 
@@ -122,6 +118,7 @@ def get_arxiv_markup(arxiv_abbrev):
     except Exception as e:
         logging.exception('Exception occurred: \n',e)
     finally:
+        browser.quit()
         if len(page_text) <= 2000:
             logging.info(f'No text found for {arxiv_abbrev} on {datetime.now()}')
        
