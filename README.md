@@ -1,4 +1,4 @@
-# arXiv Assistant
+# arXiv LLMs Assistant
 
 ## In Progress
 
