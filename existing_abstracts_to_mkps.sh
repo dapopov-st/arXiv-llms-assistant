@@ -15,13 +15,12 @@ for file in abstracts/*.txt; do
     exit_status=$?
     if [ $exit_status -eq 0 ]; then
         echo "Success processing $filename. Moving to abstracts_new_processed."
-        mv "$file" "abstracts_new_processed/$filename.txt"
+        mv "$file" "abstracts_existing_processed/$filename.txt"
     else
         echo "Failed to process $filename, likely since Markup is not (yet?) available."
-        mv "$file" "abstracts_new_cant_process/$filename.txt"
+        mv "$file" "abstracts_existing_cant_process/$filename.txt"
     fi
 done
 
 
 end_time=$(date)
-echo "End time: $end_time"
