@@ -149,6 +149,8 @@ def get_past_time_range_days_df(ending_day, days_back):
         except TimeoutException: # In case articles have not been posted yet
             ARTICLES_DF.to_csv(f'./data/articles_up_to_{day}.csv',index=False)
             print('writing to csv')
+        finally:
+            browser.quit()
     ARTICLES_DF.to_csv(f'./data/articles_up_to_{day}.csv',index=False)
     print('writing to csv')
     logging.info(f'Finished scraping all days for {ending_day} going {days_back} on {datetime.now()}')
