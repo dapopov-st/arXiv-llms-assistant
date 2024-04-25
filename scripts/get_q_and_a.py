@@ -4,7 +4,7 @@ This script generates in-depth questions and answers about scientific papers usi
 The script reads the text of a paper from a file, generates questions and answers about the paper using the language model, and writes the questions and answers to a file in a specified directory. It also fetches the title of the paper from the arXiv API.
 
 The script takes three command-line arguments:
-    --model_dir: The directory where the ExLlamaV2 model files are located. Defaults to "/home/mainuser/Desktop/LLMs/MixtralInference/Mixtral-8x7B-instruct-exl2".
+    --model_dir: The directory where the ExLlamaV2 model files are located. Defaults to "../MixtralInference/Mixtral-8x7B-instruct-exl2".
     --input_dir: The directory where the input files are located. Defaults to './markups_new'.
     --output_dir: The directory where the output files should be written. Defaults to './q_and_a'.
 
@@ -12,7 +12,7 @@ Usage:
     python get_q_and_a.py --model_dir <model_dir> --input_dir <input_dir> --output_dir <output_dir>
 
 Example:
-    python get_q_and_a.py --model_dir "/home/mainuser/Desktop/LLMs/MixtralInference/Mixtral-8x7B-instruct-exl2" --input_dir "./markups_new" --output_dir "./q_and_a"
+    python get_q_and_a.py --model_dir "../MixtralInference/Mixtral-8x7B-instruct-exl2" --input_dir "./markups_new" --output_dir "./q_and_a"
 """
 
 
@@ -33,7 +33,7 @@ logging.basicConfig(filename='./logs/get_q_and_a.log', level=logging.INFO,
 from utils import get_title, move_processed_files
 
 
-def load_elx2_llm(model_dir="/home/mainuser/Desktop/LLMs/MixtralInference/Mixtral-8x7B-instruct-exl2"):
+def load_elx2_llm(model_dir="../MixtralInference/Mixtral-8x7B-instruct-exl2"):
     """
     Loads the ExLlamaV2 language model and prepares it for text generation.
 
@@ -146,7 +146,7 @@ def write_q_and_a(filename,qas,output_dir):
 
 
 parser = argparse.ArgumentParser(description='Generate questions and answers from input text')
-parser.add_argument('--model_dir', type=str, default="/home/mainuser/Desktop/LLMs/MixtralInference/Mixtral-8x7B-instruct-exl2", help='Path to the model directory')
+parser.add_argument('--model_dir', type=str, default="../MixtralInference/Mixtral-8x7B-instruct-exl2", help='Path to the model directory')
 parser.add_argument('--input_dir', type=str, default='./markups_new', help='Path to the directory containing the input files')
 parser.add_argument('--output_dir', type=str, default='./q_and_a', help='Path to the directory containing the output files')
 parser.add_argument('--processed_dir', type=str, default='./markups_new_processed', help='Path to the directory containing markups for processed files')
