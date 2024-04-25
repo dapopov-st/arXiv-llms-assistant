@@ -1,4 +1,4 @@
-# RAG Over ArXiV Papers
+# arXiv Assistant
 
 ## In Progress
 
