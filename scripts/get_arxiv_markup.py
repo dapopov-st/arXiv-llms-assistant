@@ -127,7 +127,7 @@ def get_arxiv_markup(arxiv_abbrev):
 
 parser = argparse.ArgumentParser(description="Get article by arXiv number")
 parser.add_argument('--arxiv_abbrev', type=str, help='Arxiv abbreviation number')
-parser.add_argument('--write_dir', type=str, default='./temp', help='Directory for writing markup of arXiv papers')
+parser.add_argument('--write_dir', type=str, default='./data/markups_new', help='Directory for writing markup of arXiv papers')
 args = parser.parse_args() 
 
 if __name__=='__main__':

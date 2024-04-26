@@ -73,17 +73,17 @@ def get_80_20(df):
     return pd.concat([eighty,twenty],axis=0)
 
 def write_8020_to_dir(df):
-    if not os.path.exists('./abstracts_new/'):
-        os.makedirs('./abstracts_new/')
+    if not os.path.exists('./data/abstracts_new/'):
+        os.makedirs('./data/abstracts_new/')
     for _,row in df.iterrows():
-        with open(f'./abstracts_new/{row['arxiv_abbrev']}.txt','w') as f:
+        with open(f'./data/abstracts_new/{row['arxiv_abbrev']}.txt','w') as f:
             f.write(row['title']+'\n')
             f.write(row['abstract'])
 
 parser = argparse.ArgumentParser(description='Make embeddings for abstracts')
-parser.add_argument('--directory_read_txts', type=str, default='../abstracts',help='Directory of txt abstracts for papers read')
+parser.add_argument('--directory_read_txts', type=str, default='./data/abstracts',help='Directory of txt abstracts for papers read')
 parser.add_argument('--embed_model_id', type=str, default = 'mixedbread-ai/mxbai-embed-large-v1',help='Huggingface id of the embedder model')
-parser.add_argument('--directory_unread_csv', type=str, default = '../data/articles_up_to_2024-04-16.csv',help='Path to new articles csv file')
+parser.add_argument('--directory_unread_csv', type=str, default = './data/ak_articles_up_to/articles_up_to_2024-04-16.csv',help='Path to new articles csv file')
 args = parser.parse_args() 
 
 if __name__=='__main__':

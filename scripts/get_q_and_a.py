@@ -147,9 +147,9 @@ def write_q_and_a(filename,qas,output_dir):
 
 parser = argparse.ArgumentParser(description='Generate questions and answers from input text')
 parser.add_argument('--model_dir', type=str, default="../MixtralInference/Mixtral-8x7B-instruct-exl2", help='Path to the model directory')
-parser.add_argument('--input_dir', type=str, default='./markups_new', help='Path to the directory containing the input files')
-parser.add_argument('--output_dir', type=str, default='./q_and_a', help='Path to the directory containing the output files')
-parser.add_argument('--processed_dir', type=str, default='./markups_new_processed', help='Path to the directory containing markups for processed files')
+parser.add_argument('--input_dir', type=str, default='./data/markups_new', help='Path to the directory containing the input files')
+parser.add_argument('--output_dir', type=str, default='./data/q_and_a', help='Path to the directory containing the output files')
+parser.add_argument('--processed_dir', type=str, default='.data/markups_new_processed', help='Path to the directory containing markups for processed files')
 
 def main():
     start_time = time.time()

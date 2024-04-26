@@ -8,17 +8,17 @@ echo "Start time: $start_time"
 # Loop over abstracts_new to get arXiv markup
 # Move processed files to abstracts_new_processed or abstracts_new_cant_process
 # Want to see progress at the command line, so doing this in bash instead of Python
-for file in abstracts/*.txt; do
+for file in ./data/abstracts/*.txt; do
     filename=$(basename -- "$file" .txt)
     echo "Processing $filename"
-    python ./scripts/get_arxiv_markup.py --arxiv_abbrev $filename --write_dir ./markups_existing
+    python ./scripts/get_arxiv_markup.py --arxiv_abbrev $filename --write_dir ./data/markups_existing
     exit_status=$?
     if [ $exit_status -eq 0 ]; then
         echo "Success processing $filename. Moving to abstracts_new_processed."
-        mv "$file" "abstracts_existing_processed/$filename.txt"
+        mv "$file" "./data/abstracts_existing_processed/$filename.txt"
     else
         echo "Failed to process $filename, likely since Markup is not (yet?) available."
-        mv "$file" "abstracts_existing_cant_process/$filename.txt"
+        mv "$file" "./data/abstracts_existing_cant_process/$filename.txt"
     fi
 done
 
