@@ -1,7 +1,7 @@
 # arXiv LLMs Assistant
 
 ![Project Structure](./assets/arxiv-assistant.png)
-Image by author, made with (https://whimsical.com)
+Image by author, made with [whimsical](https://whimsical.com)
 ## In Progress
 
 - The goal is to fill in knowledge gaps in NLP (later other domains, perhaps) by comparing out-of-repository papers with papers in a personal repo.  Currently testing with RAG over some ArXiv papers in PDF format, retrieving from a couple dozen ArXiv LLM papers. Plan to connect to additional recommendations from AK's daily papers.  May write scripts to grab new Zotero papers and add embeddings made from them to vector store, then make scripts for Zotero <-> AK's papers to happen dynamically.
