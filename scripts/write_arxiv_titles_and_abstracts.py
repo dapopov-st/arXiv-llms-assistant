@@ -12,40 +12,24 @@ This script should be run as a standalone script.
 
 import feedparser
 import os
+from utils import get_title_and_abstract
 # Get titles
-existing_files = set(os.listdir('../abstracts'))
-with open('../data/arxiv_names.txt','r') as f:
-    arxiv_ids = set(".".join(line.strip().split('.')[:2])+'.txt' for line in f) #f.readlines()
+existing_files = set(os.listdir('./data/abstracts'))
+with open('./data/arxiv_names.txt','r') as f:
+    arxiv_ids = set(".".join(line.strip().split('.')[:2])+'.txt' for line in f) 
 
 # Subtract out the existing files
 arxiv_ids = arxiv_ids - existing_files
 #print(arxiv_ids)
 #print(f"Len of arxiv ids: {len(arxiv_ids)}")
-def get_title_and_abstract(arxiv_id):
-    # Construct the query URL
-    try:
-        url = f'http://export.arxiv.org/api/query?id_list={arxiv_id}'
 
-        # Fetch the data
-        data = feedparser.parse(url)
-
-        # Get the first entry
-        entry = data.entries[0]
-
-        # Get title and abstract
-        title = entry.title.replace('\n', '').replace('\r', '').strip()
-        abstract = entry.summary
-        return title, abstract
-    except Exception as e:
-        print(f"Error: {e}")
-        return '',''
 
 if __name__ == '__main__':
     for arxiv_id in arxiv_ids:
-        arxiv_id = arxiv_id.replace('.txt','')
+        arxiv_id = arxiv_id.replace('.txt','').replace('.pdf','')
         title, abstract = get_title_and_abstract(arxiv_id)
         if title and abstract:
-            with open(f'../abstracts/{arxiv_id}.txt','w') as f:
+            with open(f'./data/abstracts/{arxiv_id}.txt','w') as f:
                 f.write(title+'\n'+abstract)
             print(f"Wrote {arxiv_id} to file.")
             
