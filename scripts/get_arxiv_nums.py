@@ -9,19 +9,40 @@ Finally, the script closes the connection to the Zotero SQLite database.
 """
 import sqlite3
 import os
-os.chdir(os.path.expanduser('~/Zotero'))
-conn = sqlite3.connect('zotero.sqlite')
-cur = conn.cursor()
-cur.execute('select * from itemDataValues')
-rows = cur.fetchall()
+import argparse
 
-arxiv_names = set()
-for row_num,row in rows:
-    if row.startswith("https://arxiv.org/pdf") or row.startswith("http://arxiv.org/pdf"):
-        arxiv_names.add(row.split('/')[-1])
-os.chdir(os.path.expanduser('/home/mainuser/Desktop/LLMs/RagOverArXiv/data'))
-with open('arxiv_names.txt','w') as f:
-    for name in arxiv_names:
-        f.write(name+'\n')
-    print(f"Wrote {len(arxiv_names)} arxiv names to arxiv_names.txt")
-conn.close()
+def get_arxiv_nums(zotero_path):
+    original_dir = os.getcwd()
+    os.chdir(os.path.expanduser(zotero_path))
+
+    conn = sqlite3.connect('zotero.sqlite')
+    cur = conn.cursor()
+    try:
+        cur.execute('select * from itemDataValues')
+    except sqlite3.OperationalError as e:
+        if 'database is locked' in str(e):
+            print('Database is locked, please close Zotero and retry...')
+    rows = cur.fetchall()
+
+    arxiv_names = set()
+    for _,row in rows:
+        if row.startswith("https://arxiv.org/pdf") or row.startswith("http://arxiv.org/pdf"):
+            arxiv_names.add(row.split('/')[-1])
+
+    os.chdir(original_dir)
+    os.chdir(os.path.expanduser('./data'))
+    
+    with open('arxiv_names.txt','w') as f:
+        for name in arxiv_names:
+            f.write(name+'\n')
+        print(f"Wrote {len(arxiv_names)} arxiv names to arxiv_names.txt")
+    conn.close()
+
+
+parser = argparse.ArgumentParser(description='Get arxiv numbers from Zotero')
+parser.add_argument('--zotero_path', type=str, default='~/Zotero', help='Path to Zotero files on your system')
+args = parser.parse_args()
+if __name__ == '__main__':
+    zotero_path = args.zotero_path
+    get_arxiv_nums(zotero_path)
+
