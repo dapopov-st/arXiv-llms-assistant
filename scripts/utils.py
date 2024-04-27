@@ -4,6 +4,11 @@ import logging
 import feedparser
 import os
 import shutil
+
+from exllamav2 import *
+from exllamav2.generator import *
+
+
 def classify_topic_re(example):
     """Classify abstract based on regex pattern"""
     pattern = r'^(?!.*\b(diffusion|3D|computer vision|image|video|resnet|cnn|vit)\b).*\b(lms|attention|language model(s)?|LLMs|context LMs|synthetic data|GPT|RLHF|DPO|KTO|ORPO|.*RNN.*|llama|mamba).*'
@@ -78,3 +83,33 @@ def move_processed_files(input_dir, processed_dir, filename):
     input_file = os.path.join(input_dir, filename)
     processed_file = os.path.join(processed_dir, filename)
     shutil.move(input_file, processed_file)
+
+
+def load_elx2_llm(model_dir="../MixtralInference/Mixtral-8x7B-instruct-exl2"):
+    """
+    Loads the ExLlamaV2 language model and prepares it for text generation.
+
+    This function initializes the ExLlamaV2 model with the provided model directory, prepares a cache for the model, and sets up a generator for text generation with the model.
+
+    Args:
+        model_dir (str): The directory where the ExLlamaV2 model files are located. Defaults to "/home/mainuser/Desktop/LLMs/MixtralInference/Mixtral-8x7B-instruct-exl2".
+
+    Returns:
+        tuple: A tuple containing the ExLlamaV2StreamingGenerator instance (generator) and the ExLlamaV2Sampler.Settings instance (gen_settings).
+    """
+    config = ExLlamaV2Config()
+    config.model_dir = model_dir
+    config.prepare()
+
+    model = ExLlamaV2(config)
+    cache = ExLlamaV2Cache(model, lazy = True)
+
+    print("Loading model...")
+    model.load_autosplit(cache)
+
+    tokenizer = ExLlamaV2Tokenizer(config)
+    generator = ExLlamaV2StreamingGenerator(model, cache, tokenizer)
+    generator.set_stop_conditions([tokenizer.eos_token_id])
+    gen_settings = ExLlamaV2Sampler.Settings()
+
+    return generator, gen_settings

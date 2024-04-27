@@ -30,37 +30,8 @@ import time
 logging.basicConfig(filename='./logs/get_q_and_a.log', level=logging.INFO, 
                     format='%(asctime)s %(levelname)s %(message)s')
 
-from utils import get_title, move_processed_files
+from utils import get_title, move_processed_files,load_elx2_llm
 
-
-def load_elx2_llm(model_dir="../MixtralInference/Mixtral-8x7B-instruct-exl2"):
-    """
-    Loads the ExLlamaV2 language model and prepares it for text generation.
-
-    This function initializes the ExLlamaV2 model with the provided model directory, prepares a cache for the model, and sets up a generator for text generation with the model.
-
-    Args:
-        model_dir (str): The directory where the ExLlamaV2 model files are located. Defaults to "/home/mainuser/Desktop/LLMs/MixtralInference/Mixtral-8x7B-instruct-exl2".
-
-    Returns:
-        tuple: A tuple containing the ExLlamaV2StreamingGenerator instance (generator) and the ExLlamaV2Sampler.Settings instance (gen_settings).
-    """
-    config = ExLlamaV2Config()
-    config.model_dir = model_dir
-    config.prepare()
-
-    model = ExLlamaV2(config)
-    cache = ExLlamaV2Cache(model, lazy = True)
-
-    print("Loading model...")
-    model.load_autosplit(cache)
-
-    tokenizer = ExLlamaV2Tokenizer(config)
-    generator = ExLlamaV2StreamingGenerator(model, cache, tokenizer)
-    generator.set_stop_conditions([tokenizer.eos_token_id])
-    gen_settings = ExLlamaV2Sampler.Settings()
-
-    return generator, gen_settings
 
 def call_llm(
     paper_text: str,
