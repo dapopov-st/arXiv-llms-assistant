@@ -22,7 +22,7 @@ def get_title(arxiv_id):
     Returns:
         str: The title of the paper, or an empty string if an error occurs.
     """
-    logging.basicConfig(filename='../logs/get_title.log', level=logging.INFO, 
+    logging.basicConfig(filename='./logs/get_title.log', level=logging.INFO, 
                     format='%(asctime)s %(levelname)s %(message)s')
     try:
         url = f'http://export.arxiv.org/api/query?id_list={arxiv_id}'
