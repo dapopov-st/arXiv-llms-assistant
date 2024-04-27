@@ -4,6 +4,7 @@ import logging
 import feedparser
 import os
 import shutil
+from pathlib import Path
 from PyPDF2 import PdfReader
 from langchain.docstore.document import Document
 from exllamav2 import *
@@ -116,7 +117,7 @@ def load_elx2_llm(model_dir="../MixtralInference/Mixtral-8x7B-instruct-exl2"):
     return generator, gen_settings
 
 
-def get_docs_from_txt(files,text_splitter):
+def get_docs_from_txt(files_path:str,text_splitter):
     """
     This function reads a list of text files and creates a list of Document objects from their content.
 
@@ -132,6 +133,10 @@ def get_docs_from_txt(files,text_splitter):
           containing a dictionary with 'filename' and 'title' keys.
 
     """
+    files_path = Path(files_path)
+    files = list(files_path.glob('*.txt'))
+    if not files: print('Please check the path to the txt files');exit(1)
+    print(f'Number of txt files: {len(files)}')
     all_docs = []
     for i in range(len(files)):
         doc = text_splitter.create_documents([files[i].read_text()],metadatas=[{'filename':files[i].name,'title':get_title(files[i].name.split('_')[0])}])
@@ -165,7 +170,7 @@ def load_pdf_to_string(pdf_path):
     return text
 
 
-def get_docs_from_pdf(files,text_splitter):
+def get_docs_from_pdf(files_path:str,text_splitter):
     """
     This function reads a list of PDF files and creates a list of Document objects from their content.
 
@@ -179,6 +184,10 @@ def get_docs_from_pdf(files,text_splitter):
     list: A list of Document objects created from the PDF files. Each Document object has a 'metadata' attribute 
           containing a dictionary with 'filename' and 'title' keys.
     """
+    files_path = Path(files_path)
+    files = list(files_path.glob('*.pdf'))
+    if not files: print('Please check the path to the pdf files');exit(1)
+    print(f'Number of txt files: {len(files)}')
     all_docs = [load_pdf_to_string(os.path.expanduser(pdf_path)) for  pdf_path in files]
     docs_processed  = [text_splitter.split_documents([Document(page_content=doc, metadata={'filename':files[idx].name,'title':get_title(files[idx].name.split('_')[0])})]) 
             for idx,doc in enumerate(all_docs)]

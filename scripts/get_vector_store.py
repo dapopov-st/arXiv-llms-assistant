@@ -123,20 +123,20 @@ def generate_vs():
     )
 
     embedder,_ = get_embedder(args.embed_model_id)
-    FILES_PATH = Path(args.files_path)
+    #FILES_PATH = Path(args.files_path)
     
     if args.pdf_or_txt == 'txt':
-        FILES = list(FILES_PATH.glob('*.txt'))
-        if not FILES: print('Please check the path to the txt files');exit(1)
-        print(f'Number of txt files: {len(FILES)}')
-        docs_processed = utils.get_docs_from_txt(FILES,text_splitter=text_splitter)
+        # FILES = list(FILES_PATH.glob('*.txt'))
+        # if not FILES: print('Please check the path to the txt files');exit(1)
+        # print(f'Number of txt files: {len(FILES)}')
+        docs_processed = utils.get_docs_from_txt(args.files_path,text_splitter=text_splitter)
         print(f'Number of documents: {len(docs_processed)}')
         path_sub = 'txts'
     elif args.pdf_or_txt == 'pdf':
-        FILES = list(FILES_PATH.glob('*.pdf'))
-        if not FILES: print('Please check the path to the pdf files');exit(1)
-        print(f'Number of pdf files: {len(FILES)}')
-        docs_processed = utils.get_docs_from_pdf(FILES,text_splitter=text_splitter)
+        # FILES = list(FILES_PATH.glob('*.pdf'))
+        # if not FILES: print('Please check the path to the pdf files');exit(1)
+        # print(f'Number of pdf files: {len(FILES)}')
+        docs_processed = utils.get_docs_from_pdf(args.files_path,text_splitter=text_splitter)
         print(f'Number of documents: {len(docs_processed)}')
         path_sub = 'pdfs'
     else:
