@@ -87,36 +87,6 @@ def move_processed_files(input_dir, processed_dir, filename):
     shutil.move(input_file, processed_file)
 
 
-def load_elx2_llm(model_dir="../MixtralInference/Mixtral-8x7B-instruct-exl2"):
-    """
-    Loads the ExLlamaV2 language model and prepares it for text generation.
-
-    This function initializes the ExLlamaV2 model with the provided model directory, prepares a cache for the model, and sets up a generator for text generation with the model.
-
-    Args:
-        model_dir (str): The directory where the ExLlamaV2 model files are located. Defaults to "/home/mainuser/Desktop/LLMs/MixtralInference/Mixtral-8x7B-instruct-exl2".
-
-    Returns:
-        tuple: A tuple containing the ExLlamaV2StreamingGenerator instance (generator) and the ExLlamaV2Sampler.Settings instance (gen_settings).
-    """
-    config = ExLlamaV2Config()
-    config.model_dir = model_dir
-    config.prepare()
-
-    model = ExLlamaV2(config)
-    cache = ExLlamaV2Cache(model, lazy = True)
-
-    print("Loading model...")
-    model.load_autosplit(cache)
-
-    tokenizer = ExLlamaV2Tokenizer(config)
-    generator = ExLlamaV2StreamingGenerator(model, cache, tokenizer)
-    generator.set_stop_conditions([tokenizer.eos_token_id])
-    gen_settings = ExLlamaV2Sampler.Settings()
-
-    return generator, gen_settings
-
-
 def get_docs_from_txt(files_path:str,text_splitter):
     """
     This function reads a list of text files and creates a list of Document objects from their content.
@@ -193,3 +163,57 @@ def get_docs_from_pdf(files_path:str,text_splitter):
             for idx,doc in enumerate(all_docs)]
     docs_processed = [txt for doc in docs_processed for txt in doc]
     return docs_processed
+
+
+def load_elx2_llm(model_dir="../MixtralInference/Mixtral-8x7B-instruct-exl2"):
+    """
+    Loads the ExLlamaV2 language model and prepares it for text generation.
+
+    This function initializes the ExLlamaV2 model with the provided model directory, prepares a cache for the model, and sets up a generator for text generation with the model.
+
+    Args:
+        model_dir (str): The directory where the ExLlamaV2 model files are located. Defaults to "/home/mainuser/Desktop/LLMs/MixtralInference/Mixtral-8x7B-instruct-exl2".
+
+    Returns:
+        tuple: A tuple containing the ExLlamaV2StreamingGenerator instance (generator) and the ExLlamaV2Sampler.Settings instance (gen_settings).
+    """
+    config = ExLlamaV2Config()
+    config.model_dir = model_dir
+    config.prepare()
+
+    model = ExLlamaV2(config)
+    cache = ExLlamaV2Cache(model, lazy = True)
+
+    print("Loading model...")
+    model.load_autosplit(cache)
+
+    tokenizer = ExLlamaV2Tokenizer(config)
+    generator = ExLlamaV2StreamingGenerator(model, cache, tokenizer)
+    generator.set_stop_conditions([tokenizer.eos_token_id])
+    gen_settings = ExLlamaV2Sampler.Settings()
+
+    return generator, gen_settings
+
+def call_llm(
+    question: str,
+    generator: ExLlamaV2StreamingGenerator,
+    settings:ExLlamaV2Sampler.Settings,
+    max_new_tokens = 512
+) -> str:
+    """
+    Generate an output from a given question using a specified generator and settings.
+
+    Parameters:
+    question (str): The question to generate an output from.
+    generator (ExLlamaV2StreamingGenerator): The generator to use for generating the output.
+    settings (ExLlamaV2Sampler.Settings): The settings to use for the generator.
+    max_new_tokens (int, optional): The maximum number of new tokens to generate. Defaults to 512.
+
+    Returns:
+    Tuple[str, List[LangchainDocument]]: The generated output and a list of LangchainDocument objects.
+    """
+    max_new_tokens = max_new_tokens
+
+    generator.warmup()
+    output = generator.generate_simple(f"<s>[INST] {question} [/INST]", settings, max_new_tokens, seed = 1234)
+    return output

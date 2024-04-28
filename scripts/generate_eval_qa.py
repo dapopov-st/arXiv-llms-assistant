@@ -42,30 +42,6 @@ import utils
 
 from argparse import ArgumentParser
 
-def call_llm(
-    question: str,
-    generator: ExLlamaV2StreamingGenerator,
-    settings:ExLlamaV2Sampler.Settings,
-    max_new_tokens = 512
-) -> str:
-    """
-    Generate an output from a given question using a specified generator and settings.
-
-    Parameters:
-    question (str): The question to generate an output from.
-    generator (ExLlamaV2StreamingGenerator): The generator to use for generating the output.
-    settings (ExLlamaV2Sampler.Settings): The settings to use for the generator.
-    max_new_tokens (int, optional): The maximum number of new tokens to generate. Defaults to 512.
-
-    Returns:
-    Tuple[str, List[LangchainDocument]]: The generated output and a list of LangchainDocument objects.
-    """
-    max_new_tokens = max_new_tokens
-
-    generator.warmup()
-    output = generator.generate_simple(f"<s>[INST] {question} [/INST]", settings, max_new_tokens, seed = 1234)
-    return output
-
 
 
 
@@ -103,7 +79,7 @@ def genenerate_questions(n_generations: int, docs: List[str],llm,llm_settings):
 
     outputs = []
     for sampled_context in tqdm(random.sample(docs, n_generations)):
-        output_QA_couple = call_llm(question=QA_generation_prompt.format(context=sampled_context.page_content), 
+        output_QA_couple = utils.call_llm(question=QA_generation_prompt.format(context=sampled_context.page_content), 
                                     generator=llm,
                                     settings=llm_settings,
                                     max_new_tokens=1024)
