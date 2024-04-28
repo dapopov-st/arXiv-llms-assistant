@@ -9,7 +9,8 @@ from PyPDF2 import PdfReader
 from langchain.docstore.document import Document
 from exllamav2 import *
 from exllamav2.generator import *
-
+from langchain.embeddings import CacheBackedEmbeddings, HuggingFaceEmbeddings
+from langchain.storage import LocalFileStore
 
 def classify_topic_re(example):
     """Classify abstract based on regex pattern"""
@@ -217,3 +218,32 @@ def call_llm(
     generator.warmup()
     output = generator.generate_simple(f"<s>[INST] {question} [/INST]", settings, max_new_tokens, seed = 1234)
     return output
+
+def get_embedder(embed_model_id='mixedbread-ai/mxbai-embed-large-v1'):
+    """
+    This function creates an embedder object that can be used to transform text into vector representations.
+
+    Parameters:
+    embed_model_id (str, optional): The ID of the HuggingFace model to use for embeddings. 
+                                    Defaults to 'mixedbread-ai/mxbai-embed-large-v1'.
+
+    Returns:
+    tuple: A tuple containing two elements:
+        - embedder (CacheBackedEmbeddings object): An embedder object that can be used to transform text into vector 
+                                                   representations. This object is backed by a cache, so if the same 
+                                                   text is embedded multiple times, the cached result will be used 
+                                                   instead of recomputing the embedding.
+        - core_embeddings_model (HuggingFaceEmbeddings object): The underlying HuggingFace model used for embeddings.
+    """
+    store = LocalFileStore("./cache/")
+
+    embed_model_id = embed_model_id
+    core_embeddings_model = HuggingFaceEmbeddings(
+        model_name=embed_model_id,
+        model_kwargs={"trust_remote_code":True}
+    )
+    embedder = CacheBackedEmbeddings.from_bytes_store(
+        core_embeddings_model, store, namespace=embed_model_id
+
+    )
+    return embedder,core_embeddings_model
