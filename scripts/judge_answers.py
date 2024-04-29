@@ -1,26 +1,15 @@
+import argparse
+from tqdm.auto import tqdm
+import sys, os
+cwd = os.getcwd()
+sys.path.append(os.path.join(cwd, 'scripts'))
+import utils
+
+import pandas as pd
+import matplotlib.pyplot as plt
 
 from exllamav2 import *
 from exllamav2.generator import *
-
-judge_config = ExLlamaV2Config()
-judge_config.model_dir = "../PrometheusEval"
-#judge_config.model_dir = '/home/mainuser/Desktop/LLMs/Mixtral4bit'
-judge_config.prepare()
-
-judge_model = ExLlamaV2(judge_config)
-cache = ExLlamaV2Cache(judge_model, lazy = True)
-
-print("Loading model...")
-judge_model.load_autosplit(cache)
-
-judge_tokenizer = ExLlamaV2Tokenizer(judge_config)
-judge_llm = ExLlamaV2StreamingGenerator(judge_model, cache, judge_tokenizer)
-#judge_llm.set_stop_conditions([judge_tokenizer.eos_token_id])
-judge_settings = ExLlamaV2Sampler.Settings()
-judge_settings.temperature = 1.0
-# judge_settings.top_k = 30
-# judge_settings.top_p = 0.8
-# judge_settings.token_repetition_penalty = 1.03
 
 
 
@@ -57,12 +46,6 @@ from langchain.prompts.chat import (
 from langchain.schema import SystemMessage
 
 
-evaluation_prompt_template = ChatPromptTemplate.from_messages(
-    [
-        SystemMessage(content="You are a fair evaluator language model."),
-        HumanMessagePromptTemplate.from_template(EVALUATION_PROMPT),
-    ]
-)
 
 
 import re
@@ -71,7 +54,8 @@ def evaluate_answers(
     answer_path: str,
     eval_chat_model:ExLlamaV2StreamingGenerator,
     settings:ExLlamaV2Sampler.Settings,
-    evaluation_prompt: str
+    evaluation_prompt: str,
+    verbose: bool = False
 ) -> None:
     """Evaluates generated answers. Modifies the given answer file in place for better checkpointing."""
     answers = []
@@ -91,7 +75,7 @@ def evaluate_answers(
         eval_chat_model.warmup()
         
         eval_result = eval_chat_model.generate_simple(eval_prompt, 
-        settings, num_tokens=1024, seed = 1234) #max_new_tokens=1024,
+        settings, num_tokens=1024, seed = 1234) 
         feedback = re.search(r'###Feedback:\s*(.*)',eval_result,re.DOTALL).group(1)
         try:
             #score = re.search(r'(\d+)', feedback).group(1)
@@ -100,17 +84,27 @@ def evaluate_answers(
             score = 'NaN'
         answers.loc[index,f"eval_score"] = score
         answers.loc[index,f"eval_feedback"] = feedback
-        print(f'Score: {score}')
-        print(f'Feedback: {feedback}')
+        if verbose:
+            print(f'Score: {score}')
+            print(f'Feedback: {feedback}')
     return answers #INDENTED ON PURPOSE, TEST RUN!
-        # with open(answer_path, "w") as f:
-        #     json.dump(answers, f)
+        
 
 def main():
-    temp=evaluate_answers(answer_path='../data/pdfs_ws_mrkp_test/MistralQs-mxbai_embed-ZephyrRead-2000x200chunks-NoRerank.csv',
-                    eval_chat_model=judge_llm,settings=judge_settings,evaluation_prompt=EVALUATION_PROMPT)
-    temp.to_csv("../data/pdfs_ws_mrkp_test/MistralQs-mxbai_embed-ZephyrRead-2000x200chunks-NoRerank-Evaluated.csv", index=False)
-    import matplotlib.pyplot as plt
-    temp.eval_score.sort_values().hist()
+    judge_llm, judge_settings = utils.load_elx2_llm('../PrometheusEval')
+    judge_settings.temperature = 1.0
+    evaluation_prompt_template = ChatPromptTemplate.from_messages(
+    [
+        SystemMessage(content="You are a fair evaluator language model."),
+        HumanMessagePromptTemplate.from_template(EVALUATION_PROMPT),
+    ]
+    )
+
+
+    judged_answers_df=evaluate_answers(answer_path='../data/pdfs_ws_mrkp_test/MistralQs-mxbai_embed-ZephyrRead-2000x200chunks-NoRerank.csv',
+                    eval_chat_model=judge_llm,settings=judge_settings,evaluation_prompt=evaluation_prompt_template)
+    judged_answers_df.to_csv("../data/pdfs_ws_mrkp_test/MistralQs-mxbai_embed-ZephyrRead-2000x200chunks-NoRerank-Evaluated.csv", index=False)
+    
+    judged_answers_df.eval_score.sort_values().hist()
     plt.title("Pdf-MistralQs-mxbai_embed-ZephyrRead-2000x200chunks-NoRerank");
     plt.savefig('../data/pdfs_ws_mrkp_test/Pdf-MistralQs-mxbai_embed-ZephyrRead-2000x200chunks-NoRerank-Evaluated.png')
