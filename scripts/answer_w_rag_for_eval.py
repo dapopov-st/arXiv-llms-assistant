@@ -1,18 +1,24 @@
+import argparse
+import sys, os
+cwd = os.getcwd()
+sys.path.append(os.path.join(cwd, 'scripts'))
+
+import utils
+
+
 from langchain.embeddings import CacheBackedEmbeddings, HuggingFaceEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.storage import LocalFileStore
 store = LocalFileStore("./cache/")
 
-#embed_model_id = 'sentence-transformers/all-MiniLM-L6-v2'
-embed_model_id = 'mixedbread-ai/mxbai-embed-large-v1'
-core_embeddings_model = HuggingFaceEmbeddings(
-    model_name=embed_model_id
-)
-embedder = CacheBackedEmbeddings.from_bytes_store(
-    core_embeddings_model, store, namespace=embed_model_id
-)
+from exllamav2 import *
+from exllamav2.generator import *
 
-vector_store = FAISS.load_local('../data/rag_index_dir', embedder,allow_dangerous_deserialization=True)
+from ragatouille import RAGPretrainedModel
+from typing import Optional, List, Tuple
+RERANKER = RAGPretrainedModel.from_pretrained("colbert-ir/colbertv2.0")
+from langchain.docstore.document import Document as LangchainDocument
+
 RAG_PROMPT_TEMPLATE = """
 <|system|>
 Using the information contained in the context,
@@ -30,94 +36,22 @@ Question: {question}
 </s>
 <|assistant|>
 """
-from exllamav2 import *
-from exllamav2.generator import *
-import sys, torch
 
 
-reader_config = ExLlamaV2Config()
-reader_config.model_dir = "/home/mainuser/Desktop/LLMs/ZephyrInference"
-#reader_config.model_dir = '/home/mainuser/Desktop/LLMs/Mixtral4bit'
-reader_config.prepare()
 
-reader_model = ExLlamaV2(reader_config)
-cache = ExLlamaV2Cache(reader_model, lazy = True)
-
-print("Loading model...")
-reader_model.load_autosplit(cache)
-
-reader_tokenizer = ExLlamaV2Tokenizer(reader_config)
-reader_llm = ExLlamaV2StreamingGenerator(reader_model, cache, reader_tokenizer)
-#reader_llm.set_stop_conditions([reader_tokenizer.eos_token_id])
-reader_settings = ExLlamaV2Sampler.Settings()
-reader_settings.temperature = 0.85
-reader_settings.top_k = 30
-reader_settings.top_p = 0.8
-reader_settings.token_repetition_penalty = 1.03
-from ragatouille import RAGPretrainedModel
-from typing import Optional, List, Tuple
-RERANKER = RAGPretrainedModel.from_pretrained("colbert-ir/colbertv2.0")
-from langchain.docstore.document import Document as LangchainDocument
 def answer_with_rag(
     question: str,
-    generator: ExLlamaV2StreamingGenerator,
-   # tokenizer: ExLlamaV2Tokenizer,
+    reader: ExLlamaV2StreamingGenerator,
     settings:ExLlamaV2Sampler.Settings,
-    max_new_tokens = 512,
-    knowledge_index: FAISS = vector_store,
-    reranker: Optional[RAGPretrainedModel] = None,
-    num_retrieved_docs: int = 10, #30,
-    #num_docs_final: int = 5,
-) -> Tuple[str, List[LangchainDocument]]:
-    # Gather documents with retriever
-    print("=> Retrieving documents...")
-    embedding_vector = core_embeddings_model.embed_query(question)
-    relevant_docs = knowledge_index.similarity_search_by_vector(embedding_vector, k = num_retrieved_docs)#num_retrieved_docs)
-    relevant_docs = [doc.page_content for doc in relevant_docs]  # keep only the text
-
-    # Optionally rerank results
-    # if reranker:
-    #     print("=> Reranking documents...")
-    #     relevant_docs = reranker.rerank(question, relevant_docs, k=num_docs_final)
-    #     #print(f"Type is : {type(relevant_docs[0])}")
-    #     print(dir(relevant_docs[0]))
-    #     relevant_docs = [doc['page_content'] for doc in relevant_docs]
-
-    relevant_docs = relevant_docs[:num_retrieved_docs]
-
-    # Build the final prompt
-    context = "\nExtracted documents:\n"
-    context += "".join([f"Document {str(i)}:::\n" + doc for i, doc in enumerate(relevant_docs)])
-
-   
-    generator.warmup()
-    final_prompt = RAG_PROMPT_TEMPLATE.format(question=question, context=context)
-
-    answer = generator.generate_simple(final_prompt, 
-    settings, max_new_tokens, seed = 1234)
-    # print(answer)
-    return answer,relevant_docs
-
-
-answer, relevant_docs = answer_with_rag(question="What is the difference between RAG and self-RAG?", generator=reader_llm,settings=reader_settings,max_new_tokens=512)
-from ragatouille import RAGPretrainedModel
-from typing import Optional, List, Tuple
-RERANKER = RAGPretrainedModel.from_pretrained("colbert-ir/colbertv2.0")
-from langchain.docstore.document import Document as LangchainDocument
-def answer_with_rag(
-    question: str,
-    generator: ExLlamaV2StreamingGenerator,
-   # tokenizer: ExLlamaV2Tokenizer,
-    settings:ExLlamaV2Sampler.Settings,
-    max_new_tokens = 512,
-    knowledge_index: FAISS = vector_store,
+    embedding_model,
+    max_new_tokens,
+    knowledge_index,
     reranker: Optional[RAGPretrainedModel] = None,
     num_retrieved_docs: int = 10, #30,
     num_docs_final: int = 5,
 ) -> Tuple[str, List[LangchainDocument]]:
-    # Gather documents with retriever
     print("=> Retrieving documents...")
-    embedding_vector = core_embeddings_model.embed_query(question)
+    embedding_vector = embedding_model.embed_query(question)
     relevant_docs = knowledge_index.similarity_search_by_vector(embedding_vector, k = num_retrieved_docs)#num_retrieved_docs)
     relevant_docs = [doc.page_content for doc in relevant_docs]  # keep only the text
 
@@ -134,12 +68,26 @@ def answer_with_rag(
     context += "".join([f"Document {str(i)}:::\n" + doc for i, doc in enumerate(relevant_docs)])
 
    
-    generator.warmup()
+    reader.warmup()
     final_prompt = RAG_PROMPT_TEMPLATE.format(question=question, context=context)
 
-    answer = generator.generate_simple(final_prompt, 
+    answer = reader.generate_simple(final_prompt, 
     settings, max_new_tokens, seed = 1234)
     return answer,relevant_docs
 
 
+def main():
+    reader_llm, reader_settings = utils.load_elx2_llm(args.readerllm_dir)
+    embedder,core_embeddings_model = utils.get_embedder(args.embed_model_id)
+    vector_store = FAISS.load_local(args.vs_dir, embedder,allow_dangerous_deserialization=True)
+    answer_with_rag(embedding_model=core_embeddings_model,
+                    knowledge_index=vector_store,)
+    print(answer)
+    print(relevant_docs)
 answer, relevant_docs = answer_with_rag(question="What is the difference between RAG and self-RAG?", generator=reader_llm,settings=reader_settings,max_new_tokens=512,reranker = RERANKER)
+parser = argparse.ArgumentParser()
+parser.add_argument('--readerllm_dir', type=str, default='./data/llm')
+parser.add_argument('--vs_dir', type=str, default='./data/rag_index_dir')
+args = parser.parse_args()
+if __name__ == '__main  __':
+    main()

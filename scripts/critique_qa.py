@@ -11,10 +11,10 @@ sys.path.append(os.path.join(cwd, 'scripts'))
 import utils
 
 
-def gen_critiques(llm_dir, qas_dir):
+def gen_critiques(critic_llm_dir, qas_dir):
     with open(qas_dir, 'r') as f:
         qas = json.load(f)
-    generator_llm, generator_settings = utils.load_elx2_llm(llm_dir)
+    generator_llm, generator_settings = utils.load_elx2_llm(critic_llm_dir)
 
     question_groundedness_critique_prompt = """
     You will be given a context and a question.
@@ -129,22 +129,23 @@ def cleanup_critique(json_outputs):
     print(generated_questions.head(2).to_string())
     return generated_questions
 
-# eval_dataset = datasets.Dataset.from_pandas(
-#     generated_questions, split="train", preserve_index=False
-# )
 
 def main():
-    critiques = gen_critiques(llm_dir=args.llm_dir, qas_dir=args.qas_dir)
-    llm = args.llm_dir.split("/")[-1]
-    output_file = args.output_dir+llm+'_'+args.pdf_or_txt+'_'+"critiqued_qas.csv"
+    critiques = gen_critiques(critic_llm_dir=args.critic_llm_dir, qas_dir=args.qas_dir)
+    #llm = args.critic_llm_dir.split("/")[-1]
+    #output_file = args.output_dir+llm+'_'+args.pdf_or_txt+'_'+"critiqued_qas.csv"
+    output_file = args.output_dir+args.critic_output_file_name
     critiques.to_csv(output_file, index=False)
     print(f"Generated critiques saved to {output_file}")
+
+
 parser = ArgumentParser()
 parser.add_argument("--qas_dir", type=str, required=True)
 parser.add_argument('--pdf_or_txt', type=str, required=True)
 parser.add_argument("--output_dir", type=str, default="./data/pdfs_ws_mrkp_test/eval_outputs/")
-parser.add_argument('--llm_dir', type=str, default="../MiStralInference", help='Path to the model directory')
+parser.add_argument('--critic_llm_dir', type=str, default="../MiStralInference", help='Path to the model directory')
+parser.add_argument('--critic_output_file_name', type=str, default='critiqued_qas.csv')
 args = parser.parse_args()
 if __name__ == "__main__":
-    main()
-    #parser
+    main(args.critic_output_file_name)
+    

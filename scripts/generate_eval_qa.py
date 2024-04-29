@@ -8,7 +8,7 @@ The script uses several classes and functions from the exllamav2 and langchain l
 The script defines two functions, call_llm and genenerate_questions, which generate an output from a given question and generate a specified number of question-answer pairs from a list of documents, respectively.
 
 Usage example:
-    python scripts/generate_eval_qa.py --nquestions=2 --pdf_or_txt='pdf' --output_file_name='qa_pdf_2000_200_mistral.csv' --files_path='./data/pdfs_ws_mrkp_test/pdfs/'
+    python scripts/generate_eval_qa.py --nquestions=2 --pdf_or_txt='pdf' --eval_output_json='qa_pdf_2000_200_mistral.csv' --files_path='./data/pdfs_ws_mrkp_test/pdfs/'
 Arguments:
     --chunk_size: This argument specifies the size of the chunks to split the text into when creating Document objects. The size is measured in number of characters. The default value is 2000.
 
@@ -18,13 +18,13 @@ Arguments:
 
     --pdf_or_txt: This argument specifies the type of files to process. It should be either 'pdf' for PDF files or 'txt' for text files. The default value is 'txt'.
 
-    --llm_dir: This argument specifies the path to the directory containing the language model to use for generating the question-answer pairs. The default value is '../MiStralInference'.
+    --qagen_llm_dir: This argument specifies the path to the directory containing the language model to use for generating the question-answer pairs. The default value is '../MiStralInference'.
 
     --files_path: This argument specifies the path to the directory containing the files to process. The default value is './data/pdfs_ws_mrkp_test/mrkps/'.
 
-    --output_path: This argument specifies the path to the directory where the output CSV file should be saved. The default value is './data/pdfs_ws_mrkp_test/dfs/'.
+    --eval_output_path: This argument specifies the path to the directory where the output CSV file should be saved. The default value is './data/pdfs_ws_mrkp_test/dfs/'.
 
-    --output_file_name: This argument specifies the name of the CSV file to save the question-answer pairs to. The default value is 'qa_couples.csv'.
+    --eval_output_json: This argument specifies the name of the CSV file to save the question-answer pairs to. The default value is 'qa_couples.csv'.
 """
 
 from typing import List
@@ -32,7 +32,8 @@ from exllamav2 import *
 from exllamav2.generator import *
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
-import pandas as pd
+#import pandas as pd
+import json
 import random
 from tqdm import tqdm
 import sys, os
@@ -100,14 +101,14 @@ def genenerate_questions(n_generations: int, docs: List[str],llm,llm_settings):
     return outputs
 
 
-def main(llm,llm_settings,output_file_name):
+def main(llm,llm_settings,eval_output_json):
     """
     Qenerate question-answer pairs from a set of documents and save them to a CSV file.
 
     Parameters:
     llm: The language model to use for generating the question-answer pairs.
     llm_settings: The settings to use for the language model.
-    output_file_name (str): The name of the CSV file to save the question-answer pairs to.
+    eval_output_json (str): The name of the CSV file to save the question-answer pairs to.
     Returns:
         None
     """
@@ -125,21 +126,23 @@ def main(llm,llm_settings,output_file_name):
         print('Please specify pdf or txt')
         exit(1)
     outputs = genenerate_questions(n_generations=args.nquestions, docs=docs,llm=llm,llm_settings=llm_settings)
-    pd.DataFrame(outputs).to_csv(output_file_name, index=False)
+    #pd.DataFrame(outputs).to_csv(eval_output_json, index=False)
+    with open(eval_output_json, 'w') as f:
+        json.dump(outputs, f)
     #return pd.DataFrame(outputs)
 
 
 parser = ArgumentParser()
 parser.add_argument('--chunk_size', type=int, default=2000)
 parser.add_argument('--chunk_overlap', type=int, default=200)
-parser.add_argument('--nquestions', type=int, default=3)
+parser.add_argument('--nquestions', type=int, default=10)
 parser.add_argument('--pdf_or_txt', type=str, default='txt')
-parser.add_argument('--llm_dir', type=str, default="../MiStralInference", help='Path to the model directory')
+parser.add_argument('--qagen_llm_dir', type=str, default="../MiStralInference", help='Path to the model directory')
 parser.add_argument('--files_path', type=str, default='./data/pdfs_ws_mrkp_test/mrkps/')
-parser.add_argument('--output_path', type=str, default='./data/pdfs_ws_mrkp_test/dfs/')
-parser.add_argument('--output_file_name', type=str, default='qa_couples.csv')
+parser.add_argument('--eval_output_path', type=str, default='./data/pdfs_ws_mrkp_test/eval_outputs/')
+parser.add_argument('--eval_output_json', type=str, default='qa_couples.json')
 args = parser.parse_args()
 if __name__ == "__main__":
-    generator, gen_settings = utils.load_elx2_llm(model_dir=args.llm_dir)
-    output_file_name =os.path.join(args.output_path,  args.output_file_name)
-    main(llm=generator,llm_settings=gen_settings,output_file_name = output_file_name)
+    generator, gen_settings = utils.load_elx2_llm(model_dir=args.qagen_llm_dir)
+    eval_output_json =os.path.join(args.eval_output_path,  args.eval_output_json)
+    main(llm=generator,llm_settings=gen_settings,eval_output_json = eval_output_json)

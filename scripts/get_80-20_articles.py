@@ -45,6 +45,7 @@ def get_docs(directory):
 #TODO: Perhaps refactor this later to write vector store to a directoy and only add new vectors to it if not already there
 #So far, FAISS is blazing fast compared to model load above, so not prematurely optimizing
 def get_vector_store(docs, embedder):
+    vector_store = None
     for i, doc in enumerate(docs):
         doc.metadata['vs_index'] = i
         if i == 0:
