@@ -11,8 +11,8 @@ sys.path.append(os.path.join(cwd, 'scripts'))
 import utils
 
 
-def gen_critiques(critic_llm_dir, qas_dir):
-    with open(qas_dir, 'r') as f:
+def gen_critiques(critic_llm_dir, qas_json_fullpath):
+    with open(qas_json_fullpath, 'r') as f:
         qas = json.load(f)
     generator_llm, generator_settings = utils.load_elx2_llm(critic_llm_dir)
 
@@ -131,21 +131,21 @@ def cleanup_critique(json_outputs):
 
 
 def main():
-    critiques = gen_critiques(critic_llm_dir=args.critic_llm_dir, qas_dir=args.qas_dir)
+    critiques = gen_critiques(critic_llm_dir=args.critic_llm_dir, qas_json_fullpath=args.qas_json_fullpath)
     #llm = args.critic_llm_dir.split("/")[-1]
-    #output_file = args.output_dir+llm+'_'+args.pdf_or_txt+'_'+"critiqued_qas.csv"
-    output_file = args.output_dir+args.critic_output_file_name
+    output_file = args.critic_output_dir+args.critic_output_filename if args.critic_output_fullpath is None else args.critic_output_fullpath
     critiques.to_csv(output_file, index=False)
     print(f"Generated critiques saved to {output_file}")
 
 
 parser = ArgumentParser()
-parser.add_argument("--qas_dir", type=str, required=True)
-parser.add_argument('--pdf_or_txt', type=str, required=True)
-parser.add_argument("--output_dir", type=str, default="./data/pdfs_ws_mrkp_test/eval_outputs/")
+parser.add_argument("--qas_json_fullpath", type=str, required=True)
+parser.add_argument("--critic_output_dir", type=str, default="./data/pdfs_ws_mrkp_test/eval_outputs/")
 parser.add_argument('--critic_llm_dir', type=str, default="../MiStralInference", help='Path to the model directory')
-parser.add_argument('--critic_output_file_name', type=str, default='critiqued_qas.csv')
+parser.add_argument('--critic_output_filename', type=str, default='critiqued_qas.csv')
+parser.add_argument('--critic_output_fullpath',type=str,default=None, help='Only specify if critic_output_dir and critic_output_filename not specified') # Or fullpath
+
 args = parser.parse_args()
 if __name__ == "__main__":
-    main(args.critic_output_file_name)
+    main()
     

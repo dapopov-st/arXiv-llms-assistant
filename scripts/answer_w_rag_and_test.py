@@ -124,27 +124,33 @@ def main(vs_dir):
     reader_llm, reader_llm_settings = utils.load_elx2_llm(args.reader_llm_dir)
     embedder,core_embedding_model = utils.get_embedder(args.embed_model_id)
     vector_store = FAISS.load_local(vs_dir, embedder,allow_dangerous_deserialization=True) 
-    eval_dataset = pd.read_csv('./data/pdfs_ws_mrkp_test/eval_outputs/MiStralInference_txt_critiqued_qas.csv')
+    eval_dataset = pd.read_csv(args.critiqued_df_fullpath)
     ds_rag = run_rag_tests(eval_dataset,reader_llm,reader_llm_settings,knowledge_index=vector_store,
                 embedding_model=core_embedding_model,reranker=None,
-                test_settings=args.output_file_name.split('.')[0])# max_new_tokens=1024,reranker=RERANKER,
-    ds_rag.to_csv(args.output_path+args.output_file_name, index=False)
+                test_settings=None) #args.ragans_output_filename.split('.')[0])# max_new_tokens=1024,reranker=RERANKER,
+    output_file = args.ragans_output_path+args.ragans_output_filename if not args.ragans_output_fullpath else args.ragans_output_fullpath
+    ds_rag.to_csv(output_file, index=False)
 
     
 parser = argparse.ArgumentParser()
 parser.add_argument('--pdf_or_txt', type=str, required=True, help='pdf or txt') 
 parser.add_argument('--reader_llm_dir', type=str, default="../MiStralInference", help='Path to the model directory')
 parser.add_argument('--embed_model_id', type=str, default='mixedbread-ai/mxbai-embed-large-v1')
-parser.add_argument('--files_path', type=str, default='./data/pdfs_ws_mrkp_test/eval_outputs/MiStralInference_txt_critiqued_qas.csv')
-parser.add_argument('--output_path', type=str, default='./data/pdfs_ws_mrkp_test/eval_outputs/')
-parser.add_argument('--output_file_name', type=str, default='MistralQs-mxbaiEmbed-ZephyrRead-2000x200chunks-NoRerank.csv')
+parser.add_argument('--critiqued_df_fullpath', type=str, default='./data/pdfs_ws_mrkp_test/eval_outputs/MiStralInference_txt_critiqued_qas.csv')
+parser.add_argument('--ragans_output_path', type=str, default='./data/pdfs_ws_mrkp_test/eval_outputs/')
+parser.add_argument('--ragans_output_filename', type=str, default='MistralQs-mxbaiEmbed-ZephyrRead-2000x200chunks-NoRerank.csv')
+parser.add_argument('--ragans_output_fullpath',type=str,default=None, help='Only specify if critic_output_dir and critic_output_filename not specified') # Or fullpath
+parser.add_argument('--vs_dir', type=str, default=None)
 args = parser.parse_args()
 
 if __name__ == '__main__':
-    if args.pdf_or_txt == 'pdf':
-        vs_dir = './data/rag_index_dir/pdfs'
+    if not args.vs_dir:
+        if args.pdf_or_txt == 'pdf':
+            vs_dir = './data/rag_index_dir/pdfs'
+        else:
+            vs_dir ='./data/rag_index_dir/txts'
     else:
-        vs_dir ='./data/rag_index_dir/txts'
+        vs_dir = args.vs_dir
     main(vs_dir=vs_dir)
 
 
