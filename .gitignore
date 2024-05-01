@@ -163,3 +163,4 @@ cython_debug/
 RagOverArXiv/clusterofstars
 RagOverArXiv/temp
 RagOverArXiv/nbs/cache/sentence-transformers
+RagOverArXiv/data

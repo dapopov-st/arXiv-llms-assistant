@@ -48,8 +48,6 @@ from langchain.storage import LocalFileStore
 
 
 
-
-
 def get_vector_store(docs, embedder):
     """
     This function generates a FAISS vector store from a list of documents.

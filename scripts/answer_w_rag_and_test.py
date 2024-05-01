@@ -1,3 +1,26 @@
+"""
+`answer_w_rag_and_test.py`: A script for generating and evaluating answers using an llm model and a knowledge index.
+
+This script contains two main functions: `answer_with_rag` and `run_rag_tests`.
+
+`answer_with_rag` generates an answer to a given question using an llm model and a knowledge index. It returns the generated answer and the list of relevant documents retrieved from the knowledge index.
+
+`run_rag_tests` runs tests on a given dataset using the `answer_with_rag` function. It updates the dataset with the generated answers and relevant documents, and returns the updated dataset.
+
+This script requires the `ExLlamaV2StreamingGenerator`, `ExLlamaV2Sampler.Settings`, and `RAGPretrainedModel` objects from the `exllamav2` package, and the `FAISS` and `LangchainDocument` objects from the `faiss` and `langchain` packages respectively.
+
+Command-line arguments:
+--pdf_or_txt: Specifies the type of the input files. Should be either 'pdf' or 'txt'.
+--reader_llm_dir: Path to the directory containing the chat model to use for generating the answers.
+--embed_model_id: Identifier of the model to use for embedding the questions.
+--critiqued_df_fullpath: Full path to the CSV file containing the critiqued questions and answers.
+--ragans_output_path: Path to the directory where the output file will be saved.
+--ragans_output_filename: Name of the output file.
+--ragans_inout_fullpath: Full path to the input/output file. Only specify this if critic_output_dir and critic_output_filename are not specified.
+--vs_dir: Directory for the VS (Visual Studio) files. This argument seems to be unused in the provided code excerpt.
+--use_reranker: If True, uses a reranker model to rerank the relevant documents.
+"""
+
 import argparse
 from tqdm.auto import tqdm
 import sys, os
@@ -52,6 +75,23 @@ def answer_with_rag(
     num_retrieved_docs: int = 10, #30,
     num_docs_final: int = 5,
 ) -> Tuple[str, List[LangchainDocument]]:
+    """
+    Generates an answer to a given question using an llm model and a knowledge index.
+
+    Parameters:
+    question (str): The question to answer.
+    reader_llm (ExLlamaV2StreamingGenerator): The llm model to use for generating the answer.
+    reader_llm_settings (ExLlamaV2Sampler.Settings): Settings for the llm model.
+    embedding_model: The model to use for embedding the question.
+    max_new_tokens: The maximum number of new tokens to generate.
+    knowledge_index: The index to use for retrieving relevant documents.
+    use_reranker (Optional[RAGPretrainedModel]): An optional reranker model to use.
+    num_retrieved_docs (int, optional): The number of documents to retrieve. Defaults to 10.
+    num_docs_final (int, optional): The final number of documents to use. Defaults to 5.
+
+    Returns:
+    Tuple[str, List[LangchainDocument]]: The generated answer and the list of relevant documents.
+    """
     print("=> Retrieving documents...")
     embedding_vector = embedding_model.embed_query(question)
     relevant_docs = knowledge_index.similarity_search_by_vector(embedding_vector, k = num_retrieved_docs)#num_retrieved_docs)
@@ -89,7 +129,21 @@ def run_rag_tests(
     use_reranker: Optional[RAGPretrainedModel] = None,
     test_settings: str = None
 ):
-    """Runs RAG tests on the given dataset and saves the results to the given output file."""
+    """
+    Runs RAG tests on a given dataset and updates the dataset with the generated answers and relevant documents.
+
+    Parameters:
+    dataset (pd.DataFrame): The dataset to test on.
+    reader_llm (ExLlamaV2StreamingGenerator): The llm model to use for generating the answers.
+    reader_llm_settings (ExLlamaV2Sampler.Settings): Settings for the llm model.
+    knowledge_index: The index to use for retrieving relevant documents.
+    embedding_model: The model to use for embedding the questions.
+    use_reranker (Optional[RAGPretrainedModel]): An optional reranker model to use.
+    test_settings (str, optional): Optional test settings.
+
+    Returns:
+    pd.DataFrame: The updated dataset with the generated answers and relevant documents.
+    """
     print("Running RAG tests...")
     dataset_copy = dataset.copy(deep=True)
     dataset_copy['retrieved_docs'] = None

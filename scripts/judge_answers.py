@@ -1,3 +1,18 @@
+"""
+`judge_answers.py`: A script for evaluating generated answers using a chat model.
+
+This script uses the `evaluate_answers` function to load answers from a CSV file, generate evaluation prompts, and feed them to a chat model. The model's feedback and score are extracted and added to the answer DataFrame. The updated DataFrame is then returned.
+
+The `evaluate_answers` function takes the following parameters:
+- `answer_path`: Path to the CSV file containing the answers to be evaluated.
+- `eval_chat_model`: The chat model to use for evaluation.
+- `settings`: Settings for the chat model.
+- `evaluation_prompt`: The evaluation prompt template.
+- `verbose` (optional): If True, prints the score and feedback for each answer. Defaults to False.
+
+This script requires the `ExLlamaV2StreamingGenerator` and `ExLlamaV2Sampler.Settings` objects from the `exllamav2` package, and the `ChatPromptTemplate` and `HumanMessagePromptTemplate` objects from the `langchain.prompts.chat` module.
+"""
+
 import argparse
 import re
 from tqdm.auto import tqdm
@@ -26,8 +41,20 @@ def evaluate_answers(
     settings:ExLlamaV2Sampler.Settings,
     evaluation_prompt: str,
     verbose: bool = False
-) -> None:
-    """Evaluates generated answers. Modifies the given answer file in place for better checkpointing."""
+) -> pd.DataFrame:
+    """
+    Evaluates answers from a CSV file using a chat model and updates the file with the model's feedback and score.
+
+    Parameters:
+    answer_path (str): Path to the CSV file with answers.
+    eval_chat_model (ExLlamaV2StreamingGenerator): Chat model for evaluation.
+    settings (ExLlamaV2Sampler.Settings): Chat model settings.
+    evaluation_prompt (str): Template for evaluation prompt with placeholders for instruction, response, and reference answer.
+    verbose (bool, optional): If True, prints score and feedback. Defaults to False.
+
+    Returns:
+    pd.DataFrame: Updated DataFrame of answers with evaluation score and feedback.
+    """
     answers = []
     if os.path.isfile(answer_path):  # load previous generations if they exist
         answers = pd.read_csv(answer_path)
