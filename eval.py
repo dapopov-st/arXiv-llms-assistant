@@ -23,7 +23,8 @@ parser.add_argument('--eval_output_dir', type=str, default=config['eval_output_d
 #parser.add_argument('--eval_output_json', type=str, default=config['eval_output_json']) # --qas_dir!!!
 parser.add_argument('--critic_llm_dir', type=str, default=config['critic_llm_dir'])
 #parser.add_argument('--critic_output_file_name', type=str, default='critiqued_qas.csv')
-parser.add_argument('--reader_llm_dir', type=str, default=config['reader_llm_dir'], help='Path to the model directory')
+parser.add_argument('--reader_llm_dir', type=str, default=config['reader_llm_dir'], help='Path to the reader directory')
+parser.add_argument('--judge_llm_dir', type=str, default=config['judge_llm_dir'], help='Path to the judge directory')
 
 #parser.add_argument("--output_dir", type=str, default="./data/pdfs_ws_mrkp_test/eval_outputs/")
 #parser.add_argument('--critic_llm_dir', type=str, default="../MiStralInference", help='Path to the model directory')
@@ -72,19 +73,11 @@ subprocess.run(['python', 'scripts/generate_eval_qa.py', '--nquestions=' + str(a
                 '--input_files_dir=' + FILES_PATH, #'--eval_output_path=' + args.eval_output_path,
                 '--qagen_llm_dir=' + args.qagen_llm_dir,  '--eval_output_fullpath=' + QAS_PATH_JSON])
 
-
-
-
-
-
-
 # ----------------CRITIQUE_QA.PY-------------------- TODO
 subprocess.run(['python', 'scripts/critique_qa.py',
                 "--qas_json_fullpath="+ QAS_PATH_JSON,
                 '--critic_llm_dir=' + args.critic_llm_dir, #'--output_dir=' + args.output_dir,
                 '--critic_output_fullpath=' + QAS_PATH_DF])
-
-
 
 # ----------------ANSWER_W_RAG_AND_TEST.PY-------------------- TODO
 #RagOverArXiv/scripts/answer_w_rag_and_test.py
@@ -96,14 +89,7 @@ subprocess.run(['python', 'scripts/answer_w_rag_and_test.py',
                 '--embed_model_id=' + args.embed_model_id,
                 ])
 
-#parser.add_argument('--critiqued_df_fullpath', type=str, default='./data/pdfs_ws_mrkp_test/eval_outputs/MiStralInference_txt_critiqued_qas.csv')
-
-"""
 # ----------------JUDGE_ANSWERS.PY-------------------- TODO
 #RagOverArXiv/scripts/judge_answers.py
-subprocess.run(['python', 'scripts/judge_answers.py', '--nquestions=' + nquestions, '--pdf_or_txt=' + pdf_or_txt, '--output_file_name=' + output_fn, '--files_path=' + files_path])
-
-
-# TODO: Make paths for outputs to be passed between subprocesses and modified after each step
-# OR! Just make one final path once have df to add to!
-"""
+subprocess.run(['python', 'scripts/judge_answers.py', '--ragans_inout_fullpath=' + QAS_PATH_DF, 
+                '--judge_llm_dir=' + args.judge_llm_dir])

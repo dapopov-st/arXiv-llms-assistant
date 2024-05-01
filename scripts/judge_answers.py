@@ -1,4 +1,5 @@
 import argparse
+import re
 from tqdm.auto import tqdm
 import sys, os
 cwd = os.getcwd()
@@ -11,34 +12,6 @@ import matplotlib.pyplot as plt
 from exllamav2 import *
 from exllamav2.generator import *
 
-
-
-EVALUATION_PROMPT = """###Task Description:
-An instruction (might include an Input inside it), a response to evaluate, a reference answer that gets a score of 5, and a score rubric representing a evaluation criteria are given.
-1. Write a detailed feedback that assess the quality of the response strictly based on the given score rubric, not evaluating in general.
-2. After writing a feedback, write a score that is an integer between 1 and 5. You should refer to the score rubric.
-3. The output format should look as follows: \"Feedback: {{write a feedback for criteria}} [RESULT] {{an integer number between 1 and 5}}\"
-4. Please do not generate any other opening, closing, and explanations. Be sure to include [RESULT] in your output.
-
-###The instruction to evaluate:
-{instruction}
-
-###Response to evaluate:
-{response}
-
-###Reference Answer (Score 5):
-{reference_answer}
-
-###Score Rubrics:
-[Is the response correct, accurate, and factual based on the reference answer?]
-Score 1: The response is completely incorrect, inaccurate, and/or not factual.
-Score 2: The response is mostly incorrect, inaccurate, and/or not factual.
-Score 3: The response is somewhat correct, accurate, and/or factual.
-Score 4: The response is mostly correct, accurate, and factual.
-Score 5: The response is completely correct, accurate, and factual.
-
-###Feedback:"""
-
 from langchain.prompts.chat import (
     ChatPromptTemplate,
     HumanMessagePromptTemplate,
@@ -46,9 +19,6 @@ from langchain.prompts.chat import (
 from langchain.schema import SystemMessage
 
 
-
-
-import re
 
 def evaluate_answers(
     answer_path: str,
@@ -91,7 +61,34 @@ def evaluate_answers(
         
 
 def main():
-    judge_llm, judge_settings = utils.load_elx2_llm('../PrometheusEval')
+
+    EVALUATION_PROMPT = """###Task Description:
+    An instruction (might include an Input inside it), a response to evaluate, a reference answer that gets a score of 5, and a score rubric representing a evaluation criteria are given.
+    1. Write a detailed feedback that assess the quality of the response strictly based on the given score rubric, not evaluating in general.
+    2. After writing a feedback, write a score that is an integer between 1 and 5. You should refer to the score rubric.
+    3. The output format should look as follows: \"Feedback: {{write a feedback for criteria}} [RESULT] {{an integer number between 1 and 5}}\"
+    4. Please do not generate any other opening, closing, and explanations. Be sure to include [RESULT] in your output.
+
+    ###The instruction to evaluate:
+    {instruction}
+
+    ###Response to evaluate:
+    {response}
+
+    ###Reference Answer (Score 5):
+    {reference_answer}
+
+    ###Score Rubrics:
+    [Is the response correct, accurate, and factual based on the reference answer?]
+    Score 1: The response is completely incorrect, inaccurate, and/or not factual.
+    Score 2: The response is mostly incorrect, inaccurate, and/or not factual.
+    Score 3: The response is somewhat correct, accurate, and/or factual.
+    Score 4: The response is mostly correct, accurate, and factual.
+    Score 5: The response is completely correct, accurate, and factual.
+
+    ###Feedback:"""
+
+    judge_llm, judge_settings = utils.load_elx2_llm(args.judge_llm_dir)
     judge_settings.temperature = 1.0
     evaluation_prompt_template = ChatPromptTemplate.from_messages(
     [
@@ -101,10 +98,17 @@ def main():
     )
 
 
-    judged_answers_df=evaluate_answers(answer_path='../data/pdfs_ws_mrkp_test/MistralQs-mxbai_embed-ZephyrRead-2000x200chunks-NoRerank.csv',
+    judged_answers_df=evaluate_answers(answer_path=args.ragans_inout_fullpath,
                     eval_chat_model=judge_llm,settings=judge_settings,evaluation_prompt=evaluation_prompt_template)
-    judged_answers_df.to_csv("../data/pdfs_ws_mrkp_test/MistralQs-mxbai_embed-ZephyrRead-2000x200chunks-NoRerank-Evaluated.csv", index=False)
+    judged_answers_df.to_csv(args.ragans_inout_fullpath, index=False)
     
     judged_answers_df.eval_score.sort_values().hist()
-    plt.title("Pdf-MistralQs-mxbai_embed-ZephyrRead-2000x200chunks-NoRerank");
-    plt.savefig('../data/pdfs_ws_mrkp_test/Pdf-MistralQs-mxbai_embed-ZephyrRead-2000x200chunks-NoRerank-Evaluated.png')
+    plt.title(args.ragans_inout_fullpath.split('/')[-1])
+    plt.savefig(args.ragans_inout_fullpath.replace('.csv','.png'))
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--ragans_inout_fullpath', type=str, required=True, help='pdf or txt')
+parser.add_argument('--judge_llm_dir', type=str, default="../PrometheusEval", help='Path to the model directory')
+args = parser.parse_args()
+if __name__ == '__main__':
+    main()
