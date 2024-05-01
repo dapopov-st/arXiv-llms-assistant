@@ -48,7 +48,7 @@ def answer_with_rag(
     embedding_model,
     max_new_tokens,
     knowledge_index,
-    reranker: Optional[RAGPretrainedModel] = None,
+    use_reranker: Optional[RAGPretrainedModel] = None,
     num_retrieved_docs: int = 10, #30,
     num_docs_final: int = 5,
 ) -> Tuple[str, List[LangchainDocument]]:
@@ -58,8 +58,8 @@ def answer_with_rag(
     relevant_docs = [doc.page_content for doc in relevant_docs]  # keep only the text
 
 
-    if reranker:
-        relevant_docs = reranker.rerank(question, relevant_docs, k=num_docs_final)
+    if use_reranker:
+        relevant_docs = RERANKER.rerank(question, relevant_docs, k=num_docs_final)
         relevant_docs = [doc["content"] for doc in relevant_docs]
 
 
@@ -86,7 +86,7 @@ def run_rag_tests(
     reader_llm_settings:ExLlamaV2Sampler.Settings,
     knowledge_index: FAISS,
     embedding_model,
-    reranker: Optional[RAGPretrainedModel] = None,
+    use_reranker: Optional[RAGPretrainedModel] = None,
     test_settings: str = None
 ):
     """Runs RAG tests on the given dataset and saves the results to the given output file."""
@@ -106,7 +106,7 @@ def run_rag_tests(
                                                            reader_llm_settings=reader_llm_settings,
                                                            embedding_model=embedding_model,
                                                            max_new_tokens=512,
-                                                           reranker = reranker)
+                                                           use_reranker = use_reranker)
 
         dataset_copy.at[index,'retrieved_docs'] = relevant_docs
         dataset_copy.loc[index,'true_answer'] = dataset_copy.loc[index,'answer']
@@ -124,11 +124,11 @@ def main(vs_dir):
     reader_llm, reader_llm_settings = utils.load_elx2_llm(args.reader_llm_dir)
     embedder,core_embedding_model = utils.get_embedder(args.embed_model_id)
     vector_store = FAISS.load_local(vs_dir, embedder,allow_dangerous_deserialization=True) 
-    eval_dataset = pd.read_csv(args.critiqued_df_fullpath)
+    eval_dataset = pd.read_csv(args.ragans_inout_fullpath)
     ds_rag = run_rag_tests(eval_dataset,reader_llm,reader_llm_settings,knowledge_index=vector_store,
-                embedding_model=core_embedding_model,reranker=None,
+                embedding_model=core_embedding_model,use_reranker=args.use_reranker,
                 test_settings=None) #args.ragans_output_filename.split('.')[0])# max_new_tokens=1024,reranker=RERANKER,
-    output_file = args.ragans_output_path+args.ragans_output_filename if not args.ragans_output_fullpath else args.ragans_output_fullpath
+    output_file = args.ragans_output_path+args.ragans_output_filename if not args.ragans_inout_fullpath else args.ragans_inout_fullpath
     ds_rag.to_csv(output_file, index=False)
 
     
@@ -139,8 +139,9 @@ parser.add_argument('--embed_model_id', type=str, default='mixedbread-ai/mxbai-e
 parser.add_argument('--critiqued_df_fullpath', type=str, default='./data/pdfs_ws_mrkp_test/eval_outputs/MiStralInference_txt_critiqued_qas.csv')
 parser.add_argument('--ragans_output_path', type=str, default='./data/pdfs_ws_mrkp_test/eval_outputs/')
 parser.add_argument('--ragans_output_filename', type=str, default='MistralQs-mxbaiEmbed-ZephyrRead-2000x200chunks-NoRerank.csv')
-parser.add_argument('--ragans_output_fullpath',type=str,default=None, help='Only specify if critic_output_dir and critic_output_filename not specified') # Or fullpath
+parser.add_argument('--ragans_inout_fullpath',type=str,default=None, help='Only specify if critic_output_dir and critic_output_filename not specified') # Or fullpath
 parser.add_argument('--vs_dir', type=str, default=None)
+parser.add_argument('--use_reranker', type=bool, default=False)
 args = parser.parse_args()
 
 if __name__ == '__main__':

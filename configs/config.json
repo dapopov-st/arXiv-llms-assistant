@@ -1,0 +1,13 @@
+{
+    "pdf_or_txt": "txt",
+    "chunk_size": "2000",
+    "chunk_overlap": "200",
+    "nquestions": "5",
+    "embed_model_id": "mixedbread-ai/mxbai-embed-large-v1",
+    "qagen_llm_dir": "../MiStralInference",
+    "eval_output_dir":"./data/pdfs_ws_mrkp_test/eval_outputs/",
+    "critic_llm_dir": "../MiStralInference",
+    "reader_llm_dir": "../MiStralInference",
+    "judge_llm_dir":"../PrometheusEval",
+    "use_reranker": false
+}
