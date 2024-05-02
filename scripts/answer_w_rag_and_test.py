@@ -95,12 +95,12 @@ def answer_with_rag(
     print("=> Retrieving documents...")
     embedding_vector = embedding_model.embed_query(question)
     relevant_docs = knowledge_index.similarity_search_by_vector(embedding_vector, k = num_retrieved_docs)#num_retrieved_docs)
-    relevant_docs = [doc.page_content for doc in relevant_docs]  # keep only the text
+    #relevant_docs = [doc.page_content for doc in relevant_docs]  # keep only the text
 
 
     if use_reranker:
         relevant_docs = RERANKER.rerank(question, relevant_docs, k=num_docs_final)
-        relevant_docs = [doc["content"] for doc in relevant_docs]
+    relevant_docs = [doc.page_content for doc in relevant_docs] 
 
 
     relevant_docs = relevant_docs[:num_retrieved_docs]
@@ -168,7 +168,7 @@ def run_rag_tests(
 
         if test_settings:
             dataset_copy["test_settings"] = test_settings
-       
+    print(f"Finished running RAG tests on {len(dataset_copy)} examples")
     return dataset_copy #INDENTED ON PURPOSE, TEST RUN!
 
 
