@@ -1,6 +1,6 @@
 # arXiv LLMs Assistant
 
-![Project Structure](./assets/arxiv-assistant.png)
+![Project Structure](./assets/arxiv-assistant2.png)
 Image by author, made with [whimsical](https://whimsical.com)
 ## In Progress
 
