@@ -5,7 +5,7 @@ Image by author, made with [whimsical](https://whimsical.com)
 ## In Progress
 
 ### The goal is twofold:
-    - Assist in studying the LLM domain by comparing out-of-repository papers with papers in a personal repo (in Zotero), then recommending new papers to read along with              providing a list of question/answer pairs for each recommended paper
+    - Assist in studying the LLM domain by comparing out-of-repository papers with papers in a personal repo (in Zotero), then recommending new papers to read along with providing a list of question/answer pairs for each recommended paper
     - Run RAG over new papers, helping with generating questions to gain a deep understanding, for example
 
 DONE:
