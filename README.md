@@ -22,5 +22,8 @@ Image by author, made with [whimsical](https://whimsical.com)
 ### Installation and usage instructions
 - Forthcoming
 
+### Potential future directions
+- Forthcoming
+
 
    
