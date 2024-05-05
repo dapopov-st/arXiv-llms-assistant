@@ -79,15 +79,20 @@ def answer_with_rag(
     print("=> Retrieving documents...")
     embedding_vector = embedding_model.embed_query(question)
     relevant_docs = knowledge_index.similarity_search_by_vector(embedding_vector, k = num_retrieved_docs)#num_retrieved_docs)
-    #relevant_docs = [doc.page_content for doc in relevant_docs]  # keep only the text
+    relevant_docs = [doc.page_content for doc in relevant_docs]  # keep only the text
 
     print(f"Len of relevant docs: {len(relevant_docs)}")
     if use_reranker:
+        print(f'RELEVANT DOC: {relevant_docs[0]} with type ',type(relevant_docs[0]))
         relevant_docs = RERANKER.rerank(question, relevant_docs, k=num_docs_final)
-    relevant_docs = [doc.page_content for doc in relevant_docs] 
+        print('Done with reranker')
+    #relevant_docs = [doc.page_content for doc in relevant_docs] 
 
 
-    relevant_docs = relevant_docs[:num_retrieved_docs]
+    relevant_docs = relevant_docs[:num_docs_final]
+    # print(f'Len of relevant_docs: {len(relevant_docs)}')
+    # print(f"Relevant docs: {relevant_docs}")
+    # print(f"Type of relevant docs: {type(relevant_docs)}")
     RAG_PROMPT_TEMPLATE = """
     <|system|>
     Using the information contained in the context,
@@ -107,7 +112,11 @@ def answer_with_rag(
     """
     # Build the final prompt
     context = "\nExtracted documents:\n"
-    context += "".join([f"Document {str(i)}:::\n" + doc for i, doc in enumerate(relevant_docs)])
+    #type(f"TYPE: {relevant_docs[0]['content']}")
+    if use_reranker: #reranker seems to have side effects, changing inputs (will return dicts with 'content' key)
+        context += "".join([f"Document {str(i)}:::\n" + doc['content'] for i, doc in enumerate(relevant_docs)])
+    else:
+        context += "".join([f"Document {str(i)}:::\n" + doc for i, doc in enumerate(relevant_docs)])
     final_prompt = RAG_PROMPT_TEMPLATE.format(question=question, context=context)
    
     reader_llm.warmup()
