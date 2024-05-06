@@ -56,8 +56,8 @@ def answer_with_rag(
     max_new_tokens,
     knowledge_index,
     use_reranker: Optional[RAGPretrainedModel] = None,
-    num_retrieved_docs: int = 10, #30,
-    num_docs_final: int = 5,
+    num_retrieved_docs: int = 20, #30,
+    num_docs_final: int = 10,
 ) -> Tuple[str, List[LangchainDocument]]:
     """
     Generates an answer to a given question using an llm model and a knowledge index.
@@ -76,7 +76,7 @@ def answer_with_rag(
     Returns:
     Tuple[str, List[LangchainDocument]]: The generated answer and the list of relevant documents.
     """
-    print("=> Retrieving documents...")
+    print(f"{Fore.BLUE}=> Retrieving documents...{Style.RESET_ALL}")
     embedding_vector = embedding_model.embed_query(question)
     relevant_docs = knowledge_index.similarity_search_by_vector(embedding_vector, k = num_retrieved_docs)#num_retrieved_docs)
     relevant_docs = [doc.page_content for doc in relevant_docs]  # keep only the text
@@ -86,29 +86,22 @@ def answer_with_rag(
         print(f'RELEVANT DOC: {relevant_docs[0]} with type ',type(relevant_docs[0]))
         relevant_docs = RERANKER.rerank(question, relevant_docs, k=num_docs_final)
         print('Done with reranker')
-    #relevant_docs = [doc.page_content for doc in relevant_docs] 
-
-
-    relevant_docs = relevant_docs[:num_docs_final]
-    # print(f'Len of relevant_docs: {len(relevant_docs)}')
-    # print(f"Relevant docs: {relevant_docs}")
-    # print(f"Type of relevant docs: {type(relevant_docs)}")
+        #relevant_docs = [doc.page_content for doc in relevant_docs] 
+        relevant_docs = relevant_docs[:num_docs_final]
+    
     RAG_PROMPT_TEMPLATE = """
-    <|system|>
     Using the information contained in the context,
     give a comprehensive answer to the question.
     Respond only to the question asked, response should be concise and relevant to the question.
     Provide the number of the source document when relevant.
     If the answer cannot be deduced from the context, do not give an answer.</s>
-    <|user|>
     Context:
     {context}
     ---
     Now here is the question you need to answer.
 
     Question: {question}
-    </s>
-    <|assistant|>
+
     """
     # Build the final prompt
     context = "\nExtracted documents:\n"
@@ -176,7 +169,7 @@ def main():
         files = glob.glob(os.path.join(FILES_PATH, '*'))
         for f in files:
             os.remove(f)
-        source_path = input(f"{Fore.GREEN}Provide an absolute path to the PDF file:\n{Style.RESET_ALL}")
+        source_path = input(f"{Fore.GREEN}Provide a path to the PDF file:\n{Style.RESET_ALL}")
         #pdf_path = input()
         upload_file(source_path, FILES_PATH)
 
