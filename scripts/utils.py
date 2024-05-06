@@ -9,8 +9,11 @@ from PyPDF2 import PdfReader
 from langchain.docstore.document import Document
 from exllamav2 import *
 from exllamav2.generator import *
-from langchain.embeddings import CacheBackedEmbeddings, HuggingFaceEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
+#from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.embeddings import CacheBackedEmbeddings
 from langchain.storage import LocalFileStore
+from colorama import Fore, Style
 
 def classify_topic_re(example):
     """Classify abstract based on regex pattern"""
@@ -18,7 +21,7 @@ def classify_topic_re(example):
     match = re.findall(pattern, example['abstract'], re.IGNORECASE)
     return 'llms' if match else 'other'
 
-def get_title(arxiv_id):
+def get_title(arxiv_id,use_logging=True):
     """
     Fetches the title of a paper from the arXiv API.
 
@@ -30,9 +33,12 @@ def get_title(arxiv_id):
     Returns:
         str: The title of the paper, or an empty string if an error occurs.
     """
-    logging.basicConfig(filename='./logs/get_title.log', level=logging.INFO, 
-                    format='%(asctime)s %(levelname)s %(message)s')
+    if use_logging:
+        logging.basicConfig(filename='./logs/get_title.log', level=logging.INFO, 
+                        format='%(asctime)s %(levelname)s %(message)s')
     try:
+        arxiv_id = arxiv_id.replace('v2','').replace('v1','').replace('.pdf','').replace('.txt','')
+        #print(f"Utils.py looking for {arxiv_id}")
         url = f'http://export.arxiv.org/api/query?id_list={arxiv_id}'
 
         # Fetch the data
@@ -43,7 +49,7 @@ def get_title(arxiv_id):
 
         # Get title and abstract
         title = entry.title.replace('\n', '').replace('\r', '').strip()
-    
+        
         return title
     except Exception as e:
         print(f"Error: {e}")
@@ -53,6 +59,7 @@ def get_title(arxiv_id):
 def get_title_and_abstract(arxiv_id):
     # Construct the query URL
     try:
+        arxiv_id = arxiv_id.replace('v2','').replace('v1','').replace('.pdf','').replace('.txt','')
         url = f'http://export.arxiv.org/api/query?id_list={arxiv_id}'
 
         # Fetch the data
@@ -158,7 +165,7 @@ def get_docs_from_pdf(files_path:str,text_splitter):
     files_path = Path(files_path)
     files = list(files_path.glob('*.pdf'))
     if not files: print('Please check the path to the pdf files');exit(1)
-    print(f'Number of txt files: {len(files)}')
+    print(f'Number of pdf files: {len(files)}')
     all_docs = [load_pdf_to_string(os.path.expanduser(pdf_path)) for  pdf_path in files]
     docs_processed  = [text_splitter.split_documents([Document(page_content=doc, metadata={'filename':files[idx].name,'title':get_title(files[idx].name.split('_')[0])})]) 
             for idx,doc in enumerate(all_docs)]
@@ -185,7 +192,7 @@ def load_elx2_llm(model_dir="../MixtralInference/Mixtral-8x7B-instruct-exl2"):
     model = ExLlamaV2(config)
     cache = ExLlamaV2Cache(model, lazy = True)
 
-    print("Loading model...")
+    print(f"{Fore.BLUE}Loading model...{Fore.RESET}")
     model.load_autosplit(cache)
 
     tokenizer = ExLlamaV2Tokenizer(config)
