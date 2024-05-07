@@ -3,6 +3,7 @@ import sys
 import subprocess
 import json
 import argparse
+from colorama import Fore, Style
 
 # Create the parser
 parser = argparse.ArgumentParser()
@@ -27,10 +28,11 @@ parser.add_argument('--critic_llm_dir', type=str, default=config['critic_llm_dir
 parser.add_argument('--reader_llm_dir', type=str, default=config['reader_llm_dir'], help='Path to the reader directory')
 parser.add_argument('--judge_llm_dir', type=str, default=config['judge_llm_dir'], help='Path to the judge directory')
 parser.add_argument('--use_reranker', type=bool, default=config['use_reranker'])
-
+#parser.add_argument('--use_reranker', action='store_true',default=config['use_reranker'])
 # Parse all arguments
 args = parser.parse_args()
-
+print(type(args.use_reranker))
+print(args)#; exit(1)
 # Determine the files path and index path based on the pdf_or_txt argument
 if args.pdf_or_txt == 'pdf':
     FILES_PATH = './data/pdfs_ws_mrkp_test/pdfs/'
@@ -60,22 +62,22 @@ QAS_PATH_JSON, QAS_PATH_DF = os.path.join(args.eval_output_dir,QAS_NAME_JSON),os
 
 
 # ----------------GET_VECTOR_STORE.PY--------------------
-print('RUNNING get_vector_store.py')
+print(f'{Fore.BLUE}Running get_vector_store.py {Style.RESET_ALL}')
 subprocess.run(['python', 'scripts/get_vector_store.py', '--pdf_or_txt=' + args.pdf_or_txt, '--files_path=' + FILES_PATH, 
                 '--chunk_size=' + str(args.chunk_size), '--chunk_overlap=' + str(args.chunk_overlap)])
 
-print("Generated vector store and stored at " + INDEX_PATH)
+print(f"{Fore.BLUE}Generated vector store and stored at {INDEX_PATH}{Style.RESET_ALL}")
 
 
 # ----------------GENERATE_EVAL_QA.PY-------------------- Generated JSON
-print('RUNNING generate_eval_qa.py')
+print(f'{Fore.BLUE}Running generate_eval_qa.py {Style.RESET_ALL}')
 subprocess.run(['python', 'scripts/generate_eval_qa.py', '--nquestions=' + str(args.nquestions), '--pdf_or_txt=' + args.pdf_or_txt, 
                '--chunk_size=' + str(args.chunk_size), '--chunk_overlap=' + str(args.chunk_overlap), 
                 '--input_files_dir=' + FILES_PATH, #'--eval_output_path=' + args.eval_output_path,
                 '--qagen_llm_dir=' + args.qagen_llm_dir,  '--eval_output_fullpath=' + QAS_PATH_JSON])
 
 # ----------------CRITIQUE_QA.PY-------------------- 
-print('RUNNING critique_qa.py')
+print(f'{Fore.BLUE}Running critique_qa.py {Style.RESET_ALL}')
 subprocess.run(['python', 'scripts/critique_qa.py',
                 "--qas_json_fullpath="+ QAS_PATH_JSON,
                 '--critic_llm_dir=' + args.critic_llm_dir, #'--output_dir=' + args.output_dir,
@@ -83,15 +85,24 @@ subprocess.run(['python', 'scripts/critique_qa.py',
 
 # ----------------ANSWER_W_RAG_AND_TEST.PY--------------------
 # Will load from local vs_dir (pdf or txt) @ Index Path vs_dir arg is passed to script
-print('RUNNING answer_w_rag_and_test.py')
-subprocess.run(['python', 'scripts/answer_w_rag_and_test.py', 
+print(f'{Fore.BLUE}Running answer_w_rag_and_test.py {Style.RESET_ALL}')
+if args.use_reranker:
+    subprocess.run(['python', 'scripts/answer_w_rag_and_test.py', 
                 '--pdf_or_txt=' + args.pdf_or_txt,
                 '--ragans_inout_fullpath=' + QAS_PATH_DF,
                 '--reader_llm_dir=' + args.reader_llm_dir,
                 '--embed_model_id=' + args.embed_model_id,
+                '--use_reranker'
                 ])
+else:
+    subprocess.run(['python', 'scripts/answer_w_rag_and_test.py', 
+                    '--pdf_or_txt=' + args.pdf_or_txt,
+                    '--ragans_inout_fullpath=' + QAS_PATH_DF,
+                    '--reader_llm_dir=' + args.reader_llm_dir,
+                    '--embed_model_id=' + args.embed_model_id,
+                    ])
 
 # ----------------JUDGE_ANSWERS.PY-------------------- 
-print('RUNNING judge_answers.py')
+print(f'{Fore.BLUE}Running judge_answers.py {Style.RESET_ALL}')
 subprocess.run(['python', 'scripts/judge_answers.py', '--ragans_inout_fullpath=' + QAS_PATH_DF, 
                 '--judge_llm_dir=' + args.judge_llm_dir])

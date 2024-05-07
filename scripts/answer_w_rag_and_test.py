@@ -22,6 +22,7 @@ Command-line arguments:
 """
 
 import argparse
+import ast
 from tqdm.auto import tqdm
 import sys, os
 cwd = os.getcwd()
@@ -33,6 +34,7 @@ import pandas as pd
 from langchain.embeddings import CacheBackedEmbeddings
 #from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
+#from langchain.vectorstores import FAISS
 from langchain.storage import LocalFileStore
 store = LocalFileStore("./cache/")
 
@@ -44,24 +46,37 @@ from typing import Optional, List, Tuple
 RERANKER = RAGPretrainedModel.from_pretrained("colbert-ir/colbertv2.0")
 from langchain.docstore.document import Document as LangchainDocument
 
+# RAG_PROMPT_TEMPLATE = """
+# <|system|>
+# Using the information contained in the context,
+# give a comprehensive answer to the question.
+# Respond only to the question asked, response should be concise and relevant to the question.
+# Provide the number of the source document when relevant.
+# If the answer cannot be deduced from the context, do not give an answer.</s>
+# <|user|>
+# Context:
+# {context}
+# ---
+# Now here is the question you need to answer.
+
+# Question: {question}
+# </s>
+# <|assistant|>
+# """
 RAG_PROMPT_TEMPLATE = """
-<|system|>
 Using the information contained in the context,
 give a comprehensive answer to the question.
 Respond only to the question asked, response should be concise and relevant to the question.
 Provide the number of the source document when relevant.
 If the answer cannot be deduced from the context, do not give an answer.</s>
-<|user|>
 Context:
 {context}
 ---
 Now here is the question you need to answer.
 
 Question: {question}
-</s>
-<|assistant|>
-"""
 
+"""
 
 
 def answer_with_rag(
@@ -71,9 +86,9 @@ def answer_with_rag(
     embedding_model,
     max_new_tokens,
     knowledge_index,
-    use_reranker: Optional[RAGPretrainedModel] = None,
-    num_retrieved_docs: int = 10, #30,
-    num_docs_final: int = 5,
+    use_reranker: Optional[RAGPretrainedModel] = False,
+    num_retrieved_docs: int = 20, #30,
+    num_docs_final: int = 10,
 ) -> Tuple[str, List[LangchainDocument]]:
     """
     Generates an answer to a given question using an llm model and a knowledge index.
@@ -94,32 +109,39 @@ def answer_with_rag(
     """
     print("=> Retrieving documents...")
     embedding_vector = embedding_model.embed_query(question)
-    relevant_docs = knowledge_index.similarity_search_by_vector(embedding_vector, k = num_retrieved_docs)#num_retrieved_docs)
-    #relevant_docs = [doc.page_content for doc in relevant_docs]  # keep only the text
-
-
+    #print(f"use_reranker: {use_reranker}, type: {type(use_reranker)}")
+    #if isinstance(use_reranker,str): use_reranker = ast.literal_eval(use_reranker)
     if use_reranker:
-        relevant_docs = RERANKER.rerank(question, relevant_docs, k=num_docs_final)
-    relevant_docs = [doc.page_content for doc in relevant_docs] 
-
-
-    relevant_docs = relevant_docs[:num_retrieved_docs]
+        relevant_docs = knowledge_index.similarity_search_by_vector(embedding_vector, k = num_retrieved_docs*2)#num_retrieved_docs)
+        relevant_docs = [doc.page_content for doc in relevant_docs]  # keep only the text
+        relevant_docs = RERANKER.rerank(question, relevant_docs, k=num_docs_final*2)
+        relevant_docs = relevant_docs[:num_docs_final*2]
+    else:
+        relevant_docs = knowledge_index.similarity_search_by_vector(embedding_vector, k = num_retrieved_docs)#num_retrieved_docs)
+        relevant_docs = [doc.page_content for doc in relevant_docs]  # keep only the text
 
     # Build the final prompt
     context = "\nExtracted documents:\n"
-    context += "".join([f"Document {str(i)}:::\n" + doc for i, doc in enumerate(relevant_docs)])
 
-   
-    reader_llm.warmup()
+    if use_reranker: #reranker seems to have side effects, changing inputs (will return dicts with 'content' key)
+        context += "".join([f"Document {str(i)}:::\n" + doc['content'] for i, doc in enumerate(relevant_docs)])
+    else:
+        context += "".join([f"Document {str(i)}:::\n" + doc for i, doc in enumerate(relevant_docs)])
     final_prompt = RAG_PROMPT_TEMPLATE.format(question=question, context=context)
-
+   
+   
+    final_prompt = RAG_PROMPT_TEMPLATE.format(question=question, context=context)
+    
+    reader_llm.warmup()
     answer = reader_llm.generate_simple(final_prompt, 
     reader_llm_settings, max_new_tokens, seed = 1234)
+    inst_idx = answer.find('[/INST]')
+    answer = answer[inst_idx+7:]
     return answer,relevant_docs
 
 
 
-from collections import namedtuple
+#from collections import namedtuple
 def run_rag_tests(
     dataset: pd.DataFrame,
     reader_llm: ExLlamaV2StreamingGenerator,
@@ -153,7 +175,7 @@ def run_rag_tests(
         if dataset_copy.loc[index,'retrieved_docs']: #already retrieved
             print(f"Continue for {index} since already processed")
             continue
-
+        #print(f"in run_rag_tests use_reranker: {use_reranker}, type: {type(use_reranker)}")
         generated_answer, relevant_docs =  answer_with_rag(question, 
                                                            knowledge_index=knowledge_index, 
                                                            reader_llm=reader_llm,
@@ -177,8 +199,14 @@ def run_rag_tests(
 def main(vs_dir):
     reader_llm, reader_llm_settings = utils.load_elx2_llm(args.reader_llm_dir)
     embedder,core_embedding_model = utils.get_embedder(args.embed_model_id)
-    vector_store = FAISS.load_local(vs_dir, embedder,allow_dangerous_deserialization=True) 
-    eval_dataset = pd.read_csv(args.ragans_inout_fullpath)
+    vector_store = FAISS.load_local(vs_dir, embedder,allow_dangerous_deserialization=True)
+    if args.ragans_inout_fullpath:
+        #eval_dataset = None 
+        eval_dataset = pd.read_csv(args.ragans_inout_fullpath)
+    else:
+        eval_dataset = pd.read_csv(args.critiqued_df_fullpath)
+    #print(f"in main use_reranker: {args.use_reranker}, type: {type(args.use_reranker)}")
+    
     ds_rag = run_rag_tests(eval_dataset,reader_llm,reader_llm_settings,knowledge_index=vector_store,
                 embedding_model=core_embedding_model,use_reranker=args.use_reranker,
                 test_settings=None) #args.ragans_output_filename.split('.')[0])# max_new_tokens=1024,reranker=RERANKER,
@@ -190,12 +218,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--pdf_or_txt', type=str, required=True, help='pdf or txt') 
 parser.add_argument('--reader_llm_dir', type=str, default="../MiStralInference", help='Path to the model directory')
 parser.add_argument('--embed_model_id', type=str, default='mixedbread-ai/mxbai-embed-large-v1')
-parser.add_argument('--critiqued_df_fullpath', type=str, default='./data/pdfs_ws_mrkp_test/eval_outputs/MiStralInference_txt_critiqued_qas.csv')
+parser.add_argument('--critiqued_df_fullpath', type=str, default='./data/pdfs_ws_mrkp_test/eval_outputs/bkps/txt_2000_200_mxbai-embe_CriticMixtral-8x_QagenMixtral-8x_NoRerank.csv')
 parser.add_argument('--ragans_output_path', type=str, default='./data/pdfs_ws_mrkp_test/eval_outputs/')
 parser.add_argument('--ragans_output_filename', type=str, default='MistralQs-mxbaiEmbed-ZephyrRead-2000x200chunks-NoRerank.csv')
 parser.add_argument('--ragans_inout_fullpath',type=str,default=None, help='Only specify if critic_output_dir and critic_output_filename not specified') # Or fullpath
 parser.add_argument('--vs_dir', type=str, default=None)
-parser.add_argument('--use_reranker', type=bool, default=False)
+parser.add_argument('--use_reranker', action='store_true')
 args = parser.parse_args()
 
 if __name__ == '__main__':
