@@ -25,5 +25,8 @@ Image by author, made with [whimsical](https://whimsical.com)
 ### Potential future directions
 - Forthcoming
 
+### Command line utility 
+To meet the second goal, the best setting out of the evaluated results was chosen and used to build a command line utility. The user would specify a path to the pdf file and then either specify 0 to get a standard set of questions or 1 to ask custom questions as shown below:
+![Cmd utility demo](./assets/cmdline_demo.png)
 
    
