@@ -25,6 +25,7 @@ Image by author, made with [whimsical](https://whimsical.com)
 
 ### Potential future directions
 - Currently, papers are selected from LLM subset of AK's recommendations for the past week using 80/20 rule.  This makes the selection simple and robust, but an approach such as nearest neighbors or continuous learning, for example, could be more rigorous
+- The topic can be changed to a non-LLM topic or broadened by modifying classify_topic_re in scripts/utils.py
 - Currently, the implementation is tied to looking for existing papers in Zotero.  This can be easily relaxed and a list of arxiv ids can be used as a starting point instead (replace scripts/get_arxiv_nums.py get_arxiv_nums function with one that takes a list of arxiv ids and writes to directory)
 - Mixtral evaluation with Reranker prooved to be a challenge due to device management.  Since desired performance was already achieved, this is left to future work
 
