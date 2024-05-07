@@ -79,15 +79,16 @@ def answer_with_rag(
     print(f"{Fore.BLUE}=> Retrieving documents...{Style.RESET_ALL}")
     embedding_vector = embedding_model.embed_query(question)
     relevant_docs = knowledge_index.similarity_search_by_vector(embedding_vector, k = num_retrieved_docs)#num_retrieved_docs)
+    #print(f"TITLE: {pd.DataFrame([d.metadata['title'] for d in relevant_docs],columns=['tilte']).value_counts()}")
     relevant_docs = [doc.page_content for doc in relevant_docs]  # keep only the text
 
     print(f"Len of relevant docs: {len(relevant_docs)}")
-    if use_reranker:
-        print(f'RELEVANT DOC: {relevant_docs[0]} with type ',type(relevant_docs[0]))
-        relevant_docs = RERANKER.rerank(question, relevant_docs, k=num_docs_final)
-        print('Done with reranker')
-        #relevant_docs = [doc.page_content for doc in relevant_docs] 
-        relevant_docs = relevant_docs[:num_docs_final]
+    # if use_reranker:
+    #     print(f'RELEVANT DOC: {relevant_docs[0]} with type ',type(relevant_docs[0]))
+    #     relevant_docs = RERANKER.rerank(question, relevant_docs, k=num_docs_final)
+    #     print('Done with reranker')
+    #     #relevant_docs = [doc.page_content for doc in relevant_docs] 
+    #     relevant_docs = relevant_docs[:num_docs_final]
     
     RAG_PROMPT_TEMPLATE = """
     Using the information contained in the context,
@@ -122,9 +123,7 @@ def answer_with_rag(
 
     return answer,relevant_docs
 
-def get_10_qas(arxiv_id):
-    #get 10 questions
-    pass
+
 def upload_file(source_path, destination_dir):
     # Ensure the destination directory exists
     os.makedirs(destination_dir, exist_ok=True)
@@ -134,60 +133,70 @@ def upload_file(source_path, destination_dir):
 
     print(f"{Fore.BLUE}File uploaded to {destination_dir}{Style.RESET_ALL}")
 
-
-def rag_pdf(question,reader_llm, reader_settings):
+def get_10_qas(reader_llm, reader_settings):
+    #get 10 questions
+    question = """Design 10 in-depth questions about the method proposed in the paper as well as its results. 
+    Avoid simple questions.  Provide answers along with the questions in Question-Answer format.  The key excerpts from the paper are below:"""
     embedder,core_embedding_model = get_embedder(EMBED_MODEL)
     vector_store = FAISS.load_local(INDEX_PATH_READ, embedder,allow_dangerous_deserialization=True) 
     embedder = embedder
-    #question = input("Enter your question")
-    #call get_q_and_a.py, make special directory for this!!!
     answer, _ = answer_with_rag(question, 
                                 reader_llm=reader_llm,
                                 reader_llm_settings=reader_settings,
                                 embedding_model=core_embedding_model,
                                 max_new_tokens=1024,
                                 knowledge_index=vector_store , 
-                                use_reranker = False)#+True)
+                                num_retrieved_docs=30,
+                                use_reranker = False)
+    return answer
+
+def rag_pdf(question,reader_llm, reader_settings):
+    embedder,core_embedding_model = get_embedder(EMBED_MODEL)
+    vector_store = FAISS.load_local(INDEX_PATH_READ, embedder,allow_dangerous_deserialization=True) 
+    embedder = embedder
+    answer, _ = answer_with_rag(question, 
+                                reader_llm=reader_llm,
+                                reader_llm_settings=reader_settings,
+                                embedding_model=core_embedding_model,
+                                max_new_tokens=1024,
+                                knowledge_index=vector_store , 
+                                use_reranker = False)
     return answer
 
 def main():
     print(f"{Fore.BLUE}RAG over arXiv{Style.RESET_ALL}")
-    # standard_or_custom = input("""Press 0 to get a standard set of questions (must provide arXiv id for an article posted on or after Dec. 2024) 
-    #                            or 1 to enter your own question""")
-    standard_or_custom = input(f"""{Fore.GREEN}Press 0 to get a standard set of questions (must provide arXiv id for an article posted on or after Dec. 2023) 
-                               or 1 to enter your own question:\n{Style.RESET_ALL}""")
-    if standard_or_custom == '0':
-        st.write('Standard set of questions')
-        arxiv_id = input("Enter the arXiv id of the article")
-        #call get_q_and_a.py, make special directory for this!!!
-    elif standard_or_custom == '1':
-        #print(f'{Fore.BLUE}Upload a PDF file to {FILES_PATH}{Style.RESET_ALL}')
-        #st.write('Enter your own question')
-        if not os.path.exists(FILES_PATH):
+    # standard_or_custom = input(f"""{Fore.GREEN}Press 0 to get a standard set of questions (must provide arXiv id for an article posted on or after Dec. 2023) 
+    #                            or 1 to enter your own question:\n{Style.RESET_ALL}""")
+    # Clean up directory and upload file    
+    if not os.path.exists(FILES_PATH):
             os.makedirs(FILES_PATH)
-        #else:
-        files = glob.glob(os.path.join(FILES_PATH, '*'))
-        for f in files:
-            os.remove(f)
-        source_path = input(f"{Fore.GREEN}Provide a path to the PDF file:\n{Style.RESET_ALL}")
-        #pdf_path = input()
-        upload_file(source_path, FILES_PATH)
-
-        print(f"{Fore.BLUE}Generating vector store and stored at {INDEX_PATH_READ}{Style.RESET_ALL}")
-        #print(f'{Fore.BLUE}RUNNING get_vector_store.py')
-        subprocess.run(['python', 'scripts/get_vector_store.py', '--pdf_or_txt=' + 'pdf', '--files_path=' + FILES_PATH, 
-                        '--chunk_size=' + str(1000), '--chunk_overlap=' + str(200),'--index_dir='+INDEX_PATH_WRITE])
-        READER_LLM, READER_LLM_SETTINGS = load_elx2_llm(READER_DIR)
-        while True:
-            question = input(f"{Fore.GREEN}Enter your question or enter Control+C to exit: {Style.RESET_ALL}")
-            #question = input("Enter your own question or enter Control+C to exit:\n")
-            if question:
-                answer = rag_pdf(question,reader_llm=READER_LLM, reader_settings=READER_LLM_SETTINGS)
-                print(answer)
+    files = glob.glob(os.path.join(FILES_PATH, '*'))
+    for f in files:
+        os.remove(f)
+    source_path = input(f"{Fore.GREEN}Provide a path to the PDF file:\n{Style.RESET_ALL}")
+    upload_file(source_path, FILES_PATH)
+    # Generate vector store
+    print(f"{Fore.BLUE}Generating vector store and stored at {INDEX_PATH_READ}{Style.RESET_ALL}")
+    subprocess.run(['python', 'scripts/get_vector_store.py', '--pdf_or_txt=' + 'pdf', '--files_path=' + FILES_PATH, 
+                    '--chunk_size=' + str(1000), '--chunk_overlap=' + str(200),'--index_dir='+INDEX_PATH_WRITE]) #TODO: 1500/200
+    
+    # Load model
+    READER_LLM, READER_LLM_SETTINGS = load_elx2_llm(READER_DIR)
+    
+    while True:
+        standard_or_custom = input(f"""{Fore.GREEN}Press 0 to get a standard set of questions or 1 to ask your own question(s):\n{Style.RESET_ALL}""")
+        if standard_or_custom == '0':
+            answer = get_10_qas(READER_LLM, READER_LLM_SETTINGS)
+            print(answer)
+        elif standard_or_custom == '1':
+            while True:
+                question = input(f"{Fore.GREEN}Enter your question or enter Control+C to exit: {Style.RESET_ALL}")
+                #question = input("Enter your own question or enter Control+C to exit:\n")
+                if question:
+                    answer = rag_pdf(question,reader_llm=READER_LLM, reader_settings=READER_LLM_SETTINGS)
+                    print(answer)
            
 
 if __name__=='__main__':
-    # READER_LLM, READER_LLM_SETTINGS = load_elx2_llm(READER_DIR)
-    #print('Hello World!')
     main()
     
