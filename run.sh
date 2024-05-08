@@ -1,8 +1,8 @@
-#!/bin/bash
+!/bin/bash
 
-# python scripts/get_arxiv_nums.py 
-# python scripts/write_arxiv_titles_and_abstracts.py
-# python scripts/get_ak_articles.py --days_back 3
+python scripts/get_arxiv_nums.py 
+python scripts/write_arxiv_titles_and_abstracts.py
+python scripts/get_ak_articles.py --days_back 3
 # Scrape: get paths to pass to below
 start_time=$(date)
 echo "Start time: $start_time"

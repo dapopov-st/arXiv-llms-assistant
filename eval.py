@@ -31,7 +31,6 @@ parser.add_argument('--use_reranker', type=bool, default=config['use_reranker'])
 #parser.add_argument('--use_reranker', action='store_true',default=config['use_reranker'])
 # Parse all arguments
 args = parser.parse_args()
-print(type(args.use_reranker))
 print(args)#; exit(1)
 # Determine the files path and index path based on the pdf_or_txt argument
 if args.pdf_or_txt == 'pdf':
