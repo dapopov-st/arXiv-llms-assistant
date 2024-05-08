@@ -14,7 +14,7 @@ Image by author, made with [whimsical](https://whimsical.com)
 - In addition, to conserve memory and increase speed, 6bpw exl2 quantizations were used for Mistral and Mixtral due to their excellent [perplexity scores](https://huggingface.co/turboderp/Mixtral-8x7B-instruct-exl2). 
 - Finally, in the spirit of keeping all parts of the projects open source, Prometheus Eval was used (8bpw exl2) as an alternative to GPT-4 evaluation
 - A rougth draft of evaluation results graph is below.  Retrieving from PDFs with chunk size of 1000 and 200 overlap yielded the best results, beating the best setting for retrieving from HTML markups converted to plain text (chunk size of 2000 with 200 overlap). More in-depth result comparison and improved graph forthcoming
- ![Evaluation Scores](./assets/eval_scores.png)
+ ![Evaluation Scores](./assets/eval_scores_updated.png)
 ### Other findings and observations
 - It's best to preprocess the data by only loading the articles up to the References section as References were first to be retrieved otherwise, which is not useful
 - Forthcoming
