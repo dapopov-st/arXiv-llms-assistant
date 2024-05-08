@@ -30,22 +30,19 @@ from typing import List
 from exllamav2 import *
 from exllamav2.generator import *
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-
 #import pandas as pd
 import json
 import random
+from argparse import ArgumentParser
 from tqdm import tqdm
 import sys, os
 cwd = os.getcwd()
 sys.path.append(os.path.join(cwd, 'scripts'))
 import utils
 
-from argparse import ArgumentParser
 
 
-
-
-def genenerate_questions(n_generations: int, docs: List[str],llm,llm_settings):
+def genenerate_questions(n_generations: int, docs: List[str],llm:ExLlamaV2StreamingGenerator,llm_settings:ExLlamaV2Sampler.Settings):
     """
     Generate a specified number of question-answer pairs from a list of documents.
 
@@ -100,7 +97,7 @@ def genenerate_questions(n_generations: int, docs: List[str],llm,llm_settings):
     return outputs
 
 
-def main(llm,llm_settings,eval_output_json):
+def main(llm:ExLlamaV2StreamingGenerator,llm_settings:ExLlamaV2Sampler.Settings,eval_output_json):
     """
     Qenerate question-answer pairs from a set of documents and save them to a CSV file.
 
@@ -109,7 +106,7 @@ def main(llm,llm_settings,eval_output_json):
     llm_settings: The settings to use for the language model.
     eval_output_json (str): The name of the CSV file to save the question-answer pairs to.
     Returns:
-        None
+        None, writes json outputs to file
     """
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=args.chunk_size,

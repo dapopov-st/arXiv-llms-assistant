@@ -1,16 +1,19 @@
+"""
+This module contains utility functions for the application.
+"""
+
 import re
-import numpy as np
 import logging
 import feedparser
 import os
 import shutil
 from pathlib import Path
+from typing import Tuple
 from PyPDF2 import PdfReader
 from langchain.docstore.document import Document
 from exllamav2 import *
 from exllamav2.generator import *
 from langchain_community.embeddings import HuggingFaceEmbeddings
-#from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.embeddings import CacheBackedEmbeddings
 from langchain.storage import LocalFileStore
 from colorama import Fore, Style
@@ -57,7 +60,17 @@ def get_title(arxiv_id,use_logging=True):
         return ''
     
 def get_title_and_abstract(arxiv_id):
-    # Construct the query URL
+    """
+    Fetches the title and abstract of a paper from the arXiv API.
+
+    This function constructs a query URL using the provided arXiv ID, fetches the data from the arXiv API, and extracts the title of the paper. If an error occurs, it logs the error and returns an empty string.
+
+    Args:
+        arxiv_id (str): The arXiv ID of the paper.
+
+    Returns:
+        tuple: (title,abstract) of the paper, or ('','') if an error occurs.
+    """
     try:
         arxiv_id = arxiv_id.replace('v2','').replace('v1','').replace('.pdf','').replace('.txt','')
         url = f'http://export.arxiv.org/api/query?id_list={arxiv_id}'
@@ -94,6 +107,20 @@ def move_processed_files(input_dir, processed_dir, filename):
     processed_file = os.path.join(processed_dir, filename)
     shutil.move(input_file, processed_file)
 
+def list_subdirectories(directory):
+    """
+    Recursively list all subdirectories from the given directory.
+
+    Parameters:
+    directory (str): The root directory from which to start listing subdirectories.
+    """
+    paths = []
+    for root, dirs, files in os.walk(directory):
+        for dir in dirs:
+            dir_path = os.path.join(root, dir)
+            paths.append(dir_path)
+    return paths
+
 
 def get_docs_from_txt(files_path:str,text_splitter):
     """
@@ -122,7 +149,7 @@ def get_docs_from_txt(files_path:str,text_splitter):
     return all_docs
 
 
-def load_pdf_to_string(pdf_path):
+def load_pdf_to_string(pdf_path:str):
     """
     This function reads a PDF file and extracts its text content up to the 'REFERENCES' section.
 
@@ -192,7 +219,7 @@ def load_elx2_llm(model_dir="../MixtralInference/Mixtral-8x7B-instruct-exl2"):
     model = ExLlamaV2(config)
     cache = ExLlamaV2Cache(model, lazy = True)
 
-    print(f"{Fore.BLUE}Loading model...{Fore.RESET}")
+    print(f"{Fore.BLUE}Loading model...{Style.RESET_ALL}")
     model.load_autosplit(cache)
 
     tokenizer = ExLlamaV2Tokenizer(config)
@@ -226,7 +253,7 @@ def call_llm(
     output = generator.generate_simple(f"<s>[INST] {question} [/INST]", settings, max_new_tokens, seed = 1234)
     return output
 
-def get_embedder(embed_model_id='mixedbread-ai/mxbai-embed-large-v1'):
+def get_embedder(embed_model_id='mixedbread-ai/mxbai-embed-large-v1')->Tuple[CacheBackedEmbeddings,HuggingFaceEmbeddings]:
     """
     This function creates an embedder object that can be used to transform text into vector representations.
 

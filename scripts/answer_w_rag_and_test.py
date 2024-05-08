@@ -83,9 +83,9 @@ def answer_with_rag(
     question: str,
     reader_llm: ExLlamaV2StreamingGenerator,
     reader_llm_settings:ExLlamaV2Sampler.Settings,
-    embedding_model,
-    max_new_tokens,
-    knowledge_index,
+    embedding_model:FAISS,
+    max_new_tokens:int,
+    knowledge_index:FAISS,
     use_reranker: Optional[RAGPretrainedModel] = False,
     num_retrieved_docs: int = 20, #30,
     num_docs_final: int = 10,
@@ -147,7 +147,7 @@ def run_rag_tests(
     reader_llm: ExLlamaV2StreamingGenerator,
     reader_llm_settings:ExLlamaV2Sampler.Settings,
     knowledge_index: FAISS,
-    embedding_model,
+    embedding_model:'langchain_community.embeddings.huggingface.HuggingFaceEmbeddings',
     use_reranker: Optional[RAGPretrainedModel] = None,
     test_settings: str = None
 ):
@@ -196,7 +196,17 @@ def run_rag_tests(
 
 
 
-def main(vs_dir):
+def main(vs_dir:str):
+    """
+    Main function to load embeddings, run RAG tests, and save the results.
+
+    This function loads the language model and embeddings, loads a dataset from a CSV file, runs RAG tests on the dataset, and saves the results to a CSV file.
+
+    Parameters:
+    vs_dir (str): The directory where the vector store is located.
+
+    Note: This function uses command-line arguments for several settings, including the directories of the language model and embeddings, the CSV file paths, and the output file path.
+    """
     reader_llm, reader_llm_settings = utils.load_elx2_llm(args.reader_llm_dir)
     embedder,core_embedding_model = utils.get_embedder(args.embed_model_id)
     vector_store = FAISS.load_local(vs_dir, embedder,allow_dangerous_deserialization=True)

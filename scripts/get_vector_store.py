@@ -31,27 +31,20 @@ Note: This script relies on a global 'args' object for its parameters. The 'args
 
 from tqdm.auto import tqdm
 from argparse import ArgumentParser
-import pandas as pd
-pd.set_option("display.max_colwidth", None)
-
-from pathlib import Path
 import sys, os
 cwd = os.getcwd()
-print(cwd)
 sys.path.append(os.path.join(cwd, 'scripts'))
 import utils
-
+from langchain.docstore.document import Document
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain_community.embeddings import HuggingFaceEmbeddings 
-#from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.embeddings import  CacheBackedEmbeddings
+#from langchain_community.embeddings import HuggingFaceEmbeddings 
+#from langchain.embeddings import  CacheBackedEmbeddings
 from langchain_community.vectorstores import FAISS
-#from langchain.vectorstores import FAISS
-from langchain.storage import LocalFileStore
+#from langchain.storage import LocalFileStore
 
 
 
-def get_vector_store(docs, embedder):
+def get_vector_store(docs:list[Document], embedder:'langchain.embeddings.cache.CacheBackedEmbeddings')->FAISS:
     """
     This function generates a FAISS vector store from a list of documents.
 
@@ -75,7 +68,7 @@ def get_vector_store(docs, embedder):
     return vector_store
 
 
-def generate_vs():
+def generate_vs()->None:
     """
     This function processes a set of text or PDF files, creating a list of Document objects from their content.
 
@@ -96,19 +89,12 @@ def generate_vs():
     )
 
     embedder,_ = utils.get_embedder(args.embed_model_id)
-    #FILES_PATH = Path(args.files_path)
     
     if args.pdf_or_txt == 'txt':
-        # FILES = list(FILES_PATH.glob('*.txt'))
-        # if not FILES: print('Please check the path to the txt files');exit(1)
-        # print(f'Number of txt files: {len(FILES)}')
         docs_processed = utils.get_docs_from_txt(args.files_path,text_splitter=text_splitter)
         print(f'Number of txt documents: {len(docs_processed)}')
         path_sub = 'txts'
     elif args.pdf_or_txt == 'pdf':
-        # FILES = list(FILES_PATH.glob('*.pdf'))
-        # if not FILES: print('Please check the path to the pdf files');exit(1)
-        # print(f'Number of pdf files: {len(FILES)}')
         docs_processed = utils.get_docs_from_pdf(args.files_path,text_splitter=text_splitter)
         print(f'Number of pdf documents: {len(docs_processed)}')
         path_sub = 'pdfs'

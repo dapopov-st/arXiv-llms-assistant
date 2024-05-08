@@ -88,6 +88,13 @@ def evaluate_answers(
         
 
 def main():
+    """
+    Main function to evaluate answers and save the results.
+
+    This function loads a language model and settings, creates an evaluation prompt template, evaluates the answers using the loaded model and settings, saves the results to a CSV file, and creates a histogram of the evaluation scores.
+
+    Note: This function uses command-line arguments for several settings, including the path to the language model directory and the input/output file path.
+    """
 
     EVALUATION_PROMPT = """###Task Description:
     An instruction (might include an Input inside it), a response to evaluate, a reference answer that gets a score of 5, and a score rubric representing a evaluation criteria are given.
@@ -130,8 +137,8 @@ def main():
     judged_answers_df.to_csv(args.ragans_inout_fullpath, index=False)
     
     judged_answers_df.eval_score.sort_values().hist()
-    plt.title(args.ragans_inout_fullpath.split('/')[-1])
-    plt.savefig(args.ragans_inout_fullpath.replace('.csv','.png'))
+    #plt.title(args.ragans_inout_fullpath.split('/')[-1])
+    #plt.savefig(args.ragans_inout_fullpath.replace('.csv','.png'))
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--ragans_inout_fullpath', type=str, required=True, help='pdf or txt')
