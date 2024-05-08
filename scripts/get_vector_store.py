@@ -42,8 +42,11 @@ sys.path.append(os.path.join(cwd, 'scripts'))
 import utils
 
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import CacheBackedEmbeddings, HuggingFaceEmbeddings
-from langchain.vectorstores import FAISS
+from langchain_community.embeddings import HuggingFaceEmbeddings 
+#from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.embeddings import  CacheBackedEmbeddings
+from langchain_community.vectorstores import FAISS
+#from langchain.vectorstores import FAISS
 from langchain.storage import LocalFileStore
 
 
@@ -100,14 +103,14 @@ def generate_vs():
         # if not FILES: print('Please check the path to the txt files');exit(1)
         # print(f'Number of txt files: {len(FILES)}')
         docs_processed = utils.get_docs_from_txt(args.files_path,text_splitter=text_splitter)
-        print(f'Number of documents: {len(docs_processed)}')
+        print(f'Number of txt documents: {len(docs_processed)}')
         path_sub = 'txts'
     elif args.pdf_or_txt == 'pdf':
         # FILES = list(FILES_PATH.glob('*.pdf'))
         # if not FILES: print('Please check the path to the pdf files');exit(1)
         # print(f'Number of pdf files: {len(FILES)}')
         docs_processed = utils.get_docs_from_pdf(args.files_path,text_splitter=text_splitter)
-        print(f'Number of documents: {len(docs_processed)}')
+        print(f'Number of pdf documents: {len(docs_processed)}')
         path_sub = 'pdfs'
     else:
         print('Please specify pdf or txt')

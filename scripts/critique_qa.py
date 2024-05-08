@@ -158,9 +158,9 @@ def cleanup_critique(json_outputs):
         & (generated_questions["relevance_score"] >= 3.0)
         & (generated_questions["standalone_score"] >= 3.0)
     ]
-    print("============================================")
-    print("Final evaluation dataset head(2):")
-    print(generated_questions.head(2).to_string())
+    # print("============================================")
+    # print("Final evaluation dataset head(2):")
+    # print(generated_questions.head(2).to_string())
     return generated_questions
 
 
