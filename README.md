@@ -9,6 +9,9 @@ Image by author, made with [whimsical](https://whimsical.com)
 
 ### Installation and requirements
 - Forthcoming: Selenium, Mixtral exl2; hardware requirements (44 GB max, can use fewer bits for exl2 quantization)
+- Using this project requires
+
+`huggingface-cli download turboderp/Mistral-7B-instruct-exl2 --revision 6.0bpw --local-dir-use-symlinks False --local-dir MiStralInference/`
 
 ### Evaluation
 - The original starting point was a notebook on [RAG Evaluation](https://huggingface.co/learn/cookbook/en/rag_evaluation#evaluating-rag-performance) by HuggingFace
