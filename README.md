@@ -26,7 +26,7 @@ Image by author, made with [whimsical](https://whimsical.com)
 - The topic can be changed to a non-LLM topic or broadened by modifying classify_topic_re in scripts/utils.py
 - Currently, the implementation is tied to looking for existing papers in Zotero.  This can be easily relaxed and a list of arxiv ids can be used as a starting point instead (replace scripts/get_arxiv_nums.py get_arxiv_nums function with one that takes a list of arxiv ids and writes to directory)
 - For simplicity and since results are good, Goal 1 was achieved purely with prompt engineering and passing the entire text of a given paper to Mixtral for question-answer generation.  This takes advantage of Mixtral's generous 32K context length.  This can also be achieved with RAG, however, in a manner similar to designing the command line utility for Goal 2.  The later approach would be particularly suited if Mistral (with 8K context length) were used, for example
-- Mixtral evaluation with Reranker proved to be a challenge (largely due to device management).  While this would be a clear direction for potential improvement since it has shown effective for Mistral, the desired performance was already achieved and this is left to future work
+- Mixtral evaluation with Reranker proved to be a challenge (largely due to device management).  While this would be a clear direction for potential improvement since it has shown effective for Mistral, for inference speed considerations and since the desired performance was already achieved, this is left to future work
 - It is unclear whether better performance when retrieving from PDF documents vs HTML->txt is inherent or if different processing of HTML markup would lead to results that are just as good
 
 ### Command line utility 
