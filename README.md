@@ -10,8 +10,10 @@ Image by author, made with [whimsical](https://whimsical.com)
 ### Installation and requirements
 - Forthcoming: Selenium, Mixtral exl2; hardware requirements (44 GB max, can use fewer bits for exl2 quantization)
 Using this project requires installing exllamav2, then cloning the desired quantization of the model.  For this project, 6.0bpw was chosen since it fits on two 3090s and has very [minimal quality loss compare to full model](https://huggingface.co/turboderp/Mixtral-8x7B-instruct-exl2).  The most amount of memory used in the project was about 44 GB, but to fit on a single 24GB GPU, 3-4bpw model could probably be chosen at a small quality tradeoff
-`pip install huggingface-hub[cli] exllamav2`
+
+- `pip install huggingface-hub[cli] exllamav2`
 `huggingface-cli download turboderp/Mixtral-8x7B-instruct-exl2 --revision 6.0bpw --local-dir-use-symlinks False --local-dir MiStralInference/`
+- In addition, parts of the project require Firefox and Selenium web driver.  See installation instruction [here](https://dev.to/eugenedorfling/installing-the-firefox-web-driver-on-linux-for-selenium-d45)
 
 ### Evaluation
 - The original starting point was a notebook on [RAG Evaluation](https://huggingface.co/learn/cookbook/en/rag_evaluation#evaluating-rag-performance) by HuggingFace
