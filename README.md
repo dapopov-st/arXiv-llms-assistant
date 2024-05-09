@@ -18,7 +18,6 @@ Image by author, made with [whimsical](https://whimsical.com)
 - Prompts were further tweaked to improve performance and regular expressions modified to better extract necessary information from model outputs
 - Finally, in the spirit of keeping all parts of the projects open source, Prometheus Eval was used (8bpw exl2) as an alternative to GPT-4 evaluation
 - From the evaluation results below, upgrading the model from Mistral to Mixtral yielded the most improvement (about 20%), followed by chunk size and choice of retrieving from HTML->txt or PDF version of the paper (another 10%)
- ![Evaluation Scores](./assets/eval_scores_updated.png)
 
 ### Other findings and potential future directions
 - It's best to preprocess the data by only loading the articles up to the References section as References were first to be retrieved otherwise, which is not useful
