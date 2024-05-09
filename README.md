@@ -15,7 +15,7 @@ pip install huggingface-hub[cli] exllamav2
 huggingface-cli download turboderp/Mixtral-8x7B-instruct-exl2 --revision 6.0bpw --local-dir-use-symlinks False --local-dir MiStralInference/
 ```
 - In addition, parts of the project require Firefox and Selenium web driver.  See installation instruction [here](https://dev.to/eugenedorfling/installing-the-firefox-web-driver-on-linux-for-selenium-d45)
-- Package requirements used for this project are listed in requirements.txt, but not all of them may be necessary depending on use case
+- Environment used for this project is listed in requirements.txt, but not all packages may be necessary depending on use case
 
 ### Evaluation
 - The original starting point was a notebook on [RAG Evaluation](https://huggingface.co/learn/cookbook/en/rag_evaluation#evaluating-rag-performance) by HuggingFace
