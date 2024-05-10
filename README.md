@@ -3,7 +3,7 @@
 ![Project Structure](./assets/arxiv-assistant.png)
 Image by author, made with [whimsical](https://whimsical.com)
 
-### There are two goals for this project
+### Goals for this project
 - Goal 1: Assist in studying the LLM domain by comparing out-of-repository papers with papers in a personal repo (in Zotero), then recommending new papers to read along with providing a list of question/answer pairs for each recommended paper
 - Goal 2: Run RAG over new papers, helping with generating questions to gain a deep understanding, for example.  For this purpose, RAG is evaluated with different configurations and the best evaluated configuration is selected.
 
