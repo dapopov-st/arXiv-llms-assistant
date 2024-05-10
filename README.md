@@ -7,7 +7,7 @@ Image by author, made with [whimsical](https://whimsical.com)
 - Goal 1: Assist in studying the LLM domain by comparing out-of-repository papers with papers in a personal repo (in Zotero), then recommending new papers to read along with providing a list of question/answer pairs for each recommended paper
 - Goal 2: Run RAG over new papers, helping with generating questions to gain a deep understanding, for example.  For this purpose, RAG is evaluated with different configurations and the best evaluated configuration is selected.
 
-### Installation and requirements
+### Installation, requirements, and usage
 - Using this project requires installing exllamav2, then cloning the desired quantization of the model.  For this project, 6.0bpw was chosen since it fits on two 3090s and has very [minimal quality loss compare to full model](https://huggingface.co/turboderp/Mixtral-8x7B-instruct-exl2).  The most amount of memory used in the project was about 44 GB, but to fit on a single 24GB GPU, 3-4bpw model could probably be chosen at a small quality tradeoff.  Mixtral quantized with exl2 can be installed as follows:
 
 ```bash
@@ -15,7 +15,9 @@ pip install huggingface-hub[cli] exllamav2
 huggingface-cli download turboderp/Mixtral-8x7B-instruct-exl2 --revision 6.0bpw --local-dir-use-symlinks False --local-dir MiStralInference/
 ```
 - In addition, parts of the project require Firefox and Selenium web driver.  See installation instruction [here](https://dev.to/eugenedorfling/installing-the-firefox-web-driver-on-linux-for-selenium-d45)
-- Environment used for this project is listed in requirements.txt, but not all packages may be necessary depending on use case
+- Environment used for this project is listed in environment.yaml, but not all packages may be necessary depending on use case.  To make the required directories, scripts/make_directories.py can be placed and run from the desired parent directory
+- Once installation is complete, ./run.sh would run the application accomplishing Goal 1.  If the path to Zotero directory is different on your system, modify it by passing `--zotero_path` argument to scripts/get_arxiv_nums.py in run.sh
+- To run evaluation, place articles in data/pdfs_ws_mrkp_test/{pdf|txt}, modify the config(s) in the config directory, and run `python eval_runner.py`.  
 
 ### Evaluation
 - The original starting point was a notebook on [RAG Evaluation](https://huggingface.co/learn/cookbook/en/rag_evaluation#evaluating-rag-performance) by HuggingFace
