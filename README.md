@@ -4,9 +4,9 @@
 Image by author, made with [whimsical](https://whimsical.com)
 
 ### Goals for this project
-- Goal 1: Assist in studying the LLM domain by comparing out-of-repository papers with papers in a personal repo (in Zotero), then recommending new papers to read along with providing a list of question/answer pairs for each recommended paper
+- Goal 1: Assist in studying the LLM domain by comparing out-of-repository papers with papers in a personal repo (in Zotero), then recommending new papers to read along with providing a list of question/answer pairs for each recommended paper.
 - Goal 2: Run RAG over new papers, helping with generating questions to gain a deep understanding, for example.  For this purpose, RAG is evaluated with different configurations and the best evaluated configuration is selected.
-
+- Goal 3: Build a command line utility to ask questions about the contents of uploaded papers and generate question/answer sets based on these papers.
 ### Installation, requirements, and usage
 - Using this project requires installing exllamav2, then cloning the desired quantization of the model.  For this project, 6.0bpw was chosen since it fits on two 3090s and has very [minimal quality loss compare to full model](https://huggingface.co/turboderp/Mixtral-8x7B-instruct-exl2).  The most amount of memory used in the project was about 44 GB, but to fit on a single 24GB GPU, 3-4bpw model could probably be chosen at a small quality tradeoff.  Mixtral quantized with exl2 can be installed as follows:
 
